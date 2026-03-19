@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Property, PropertyStatus, Lead, CompanySettings, User, Feedback, SubscriptionPayment, AdminSettings, Advertisement } from '../types';
-import { MOCK_PROPERTIES, MOCK_LEADS } from '../data';
+import { supabase } from '../lib/supabase';
+import { MOCK_LEADS } from '../data';
 
 export type AppMode = 'Professionals' | 'Marketplace';
 
@@ -30,6 +31,7 @@ interface PropertyContextType {
 
   darkMode: boolean;
   setDarkMode: (dark: boolean) => void;
+
   biometricsEnabled: boolean;
   setBiometricsEnabled: (enabled: boolean) => void;
 
@@ -71,7 +73,7 @@ const DEFAULT_SETTINGS: CompanySettings = {
 };
 
 export function PropertyProvider({ children }: { children: React.ReactNode }) {
-  const [properties, setProperties] = useState<Property[]>(MOCK_PROPERTIES);
+  const [properties, setProperties] = useState<Property[]>([]);
   const [leads, setLeads] = useState<Lead[]>(MOCK_LEADS);
   const [mode, setMode] = useState<AppMode>('Professionals');
   const [settings, setSettings] = useState<CompanySettings>(DEFAULT_SETTINGS);
@@ -80,9 +82,10 @@ export function PropertyProvider({ children }: { children: React.ReactNode }) {
     const saved = localStorage.getItem('keydeals_dark_mode');
     return saved === 'true';
   });
+
   const [biometricsEnabled, setBiometricsEnabled] = useState(() => {
     const saved = localStorage.getItem('keydeals_biometrics');
-    return saved !== 'false'; // Default to true
+    return saved === 'true';
   });
 
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([
@@ -222,15 +225,15 @@ export function PropertyProvider({ children }: { children: React.ReactNode }) {
   
   // Mock user for now. In a real app, this would come from Auth.
   const [user, setUser] = useState<User | null>(() => {
-    const saved = sessionStorage.getItem('keydeals_user');
+    const saved = localStorage.getItem('keydeals_user');
     return saved ? JSON.parse(saved) : null;
   });
 
   useEffect(() => {
     if (user) {
-      sessionStorage.setItem('keydeals_user', JSON.stringify(user));
+      localStorage.setItem('keydeals_user', JSON.stringify(user));
     } else {
-      sessionStorage.removeItem('keydeals_user');
+      localStorage.removeItem('keydeals_user');
     }
   }, [user]);
 
@@ -279,22 +282,213 @@ export function PropertyProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const addProperty = (prop: Property) => {
+  const addProperty = async (prop: Property) => {
     setProperties([prop, ...properties]);
+    
+    if (!supabase) return;
+    
+    try {
+      // Map camelCase to snake_case for Supabase
+      const { error } = await supabase
+        .from('properties')
+        .insert([{
+          id: prop.id,
+          title: prop.title,
+          type: prop.type,
+          purpose: prop.purpose,
+          description: prop.description,
+          remarks: prop.remarks,
+          price: prop.price,
+          city: prop.city,
+          location: prop.location,
+          landmark: prop.landmark,
+          geopoint: prop.geopoint,
+          facing: prop.facing,
+          corner_side_front: prop.cornerSideFront,
+          corner_side_side: prop.cornerSideSide,
+          open_sides: prop.openSides,
+          plot_area_sq_yd: prop.plotAreaSqYd,
+          plot_area_sq_mtr: prop.plotAreaSqMtr,
+          dimensions_length: prop.dimensionsLength,
+          dimensions_width: prop.dimensionsWidth,
+          built_up_area_sq_ft: prop.builtUpAreaSqFt,
+          frontage: prop.frontage,
+          floor_level: prop.floorLevel,
+          washroom_available: prop.washroomAvailable,
+          pantry_available: prop.pantryAvailable,
+          floors: prop.floors,
+          car_parking: prop.carParking,
+          bike_parking: prop.bikeParking,
+          road_type: prop.roadType,
+          road_width: prop.roadWidth,
+          gated_society: prop.gatedSociety,
+          status: prop.status,
+          images: prop.images,
+          owner_name: prop.ownerName,
+          phone_number: prop.phoneNumber,
+          whatsapp_number: prop.whatsappNumber,
+          added_at: prop.addedAt,
+          visit_time: prop.visitTime,
+          visited_by: prop.visitedBy,
+          mutation_doc: prop.mutationDoc,
+          sale_deed_doc: prop.saleDeedDoc,
+          gpa_doc: prop.gpaDoc,
+          possession_letter_doc: prop.possessionLetterDoc,
+          lease_doc: prop.leaseDoc,
+          lease_tenure: prop.leaseTenure,
+          property_tax_paid: prop.propertyTaxPaid,
+          electricity_bill_paid: prop.electricityBillPaid,
+          house_tax_paid: prop.houseTaxPaid,
+          site_map_approved: prop.siteMapApproved,
+          negotiable: prop.negotiable,
+          quoted_by: prop.quotedBy,
+          pricing_remarks: prop.pricingRemarks,
+          clear_title: prop.clearTitle,
+          disputed: prop.disputed,
+          under_mortgage: prop.underMortgage,
+          mortgage_bank_name: prop.mortgageBankName,
+          joint_ownership: prop.jointOwnership,
+          freehold: prop.freehold,
+          leasehold: prop.leasehold,
+          surrounding_residential: prop.surroundingResidential,
+          surrounding_commercial: prop.surroundingCommercial,
+          surrounding_mixed: prop.surroundingMixed,
+          nearby_hospital: prop.nearbyHospital,
+          nearby_park: prop.nearbyPark,
+          nearby_school: prop.nearbySchool,
+          nearby_market: prop.nearbyMarket,
+          nearby_public_transport: prop.nearbyPublicTransport,
+          second_visit_time: prop.secondVisitTime,
+          second_visit_confirmed: prop.secondVisitConfirmed,
+          is_public: prop.is_public
+        }]);
+        
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error adding property to Supabase:', err);
+    }
   };
 
-  const updateProperty = (prop: Property) => {
+  const updateProperty = async (prop: Property) => {
     setProperties(properties.map(p => p.id === prop.id ? prop : p));
+    
+    if (!supabase) return;
+    
+    try {
+      const { error } = await supabase
+        .from('properties')
+        .update({
+          title: prop.title,
+          type: prop.type,
+          purpose: prop.purpose,
+          description: prop.description,
+          remarks: prop.remarks,
+          price: prop.price,
+          city: prop.city,
+          location: prop.location,
+          landmark: prop.landmark,
+          geopoint: prop.geopoint,
+          facing: prop.facing,
+          corner_side_front: prop.cornerSideFront,
+          corner_side_side: prop.cornerSideSide,
+          open_sides: prop.openSides,
+          plot_area_sq_yd: prop.plotAreaSqYd,
+          plot_area_sq_mtr: prop.plotAreaSqMtr,
+          dimensions_length: prop.dimensionsLength,
+          dimensions_width: prop.dimensionsWidth,
+          built_up_area_sq_ft: prop.builtUpAreaSqFt,
+          frontage: prop.frontage,
+          floor_level: prop.floorLevel,
+          washroom_available: prop.washroomAvailable,
+          pantry_available: prop.pantryAvailable,
+          floors: prop.floors,
+          car_parking: prop.carParking,
+          bike_parking: prop.bikeParking,
+          road_type: prop.roadType,
+          road_width: prop.roadWidth,
+          gated_society: prop.gatedSociety,
+          status: prop.status,
+          images: prop.images,
+          owner_name: prop.ownerName,
+          phone_number: prop.phoneNumber,
+          whatsapp_number: prop.whatsappNumber,
+          added_at: prop.addedAt,
+          visit_time: prop.visitTime,
+          visited_by: prop.visitedBy,
+          mutation_doc: prop.mutationDoc,
+          sale_deed_doc: prop.saleDeedDoc,
+          gpa_doc: prop.gpaDoc,
+          possession_letter_doc: prop.possessionLetterDoc,
+          lease_doc: prop.leaseDoc,
+          lease_tenure: prop.leaseTenure,
+          property_tax_paid: prop.propertyTaxPaid,
+          electricity_bill_paid: prop.electricityBillPaid,
+          house_tax_paid: prop.houseTaxPaid,
+          site_map_approved: prop.siteMapApproved,
+          negotiable: prop.negotiable,
+          quoted_by: prop.quotedBy,
+          pricing_remarks: prop.pricingRemarks,
+          clear_title: prop.clearTitle,
+          disputed: prop.disputed,
+          under_mortgage: prop.underMortgage,
+          mortgage_bank_name: prop.mortgageBankName,
+          joint_ownership: prop.jointOwnership,
+          freehold: prop.freehold,
+          leasehold: prop.leasehold,
+          surrounding_residential: prop.surroundingResidential,
+          surrounding_commercial: prop.surroundingCommercial,
+          surrounding_mixed: prop.surroundingMixed,
+          nearby_hospital: prop.nearbyHospital,
+          nearby_park: prop.nearbyPark,
+          nearby_school: prop.nearbySchool,
+          nearby_market: prop.nearbyMarket,
+          nearby_public_transport: prop.nearbyPublicTransport,
+          second_visit_time: prop.secondVisitTime,
+          second_visit_confirmed: prop.secondVisitConfirmed,
+          is_public: prop.is_public
+        })
+        .eq('id', prop.id);
+        
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error updating property in Supabase:', err);
+    }
   };
 
-  const deleteProperty = (id: string) => {
+  const deleteProperty = async (id: string) => {
     setProperties(properties.filter(p => p.id !== id));
+    
+    if (!supabase) return;
+    
+    try {
+      const { error } = await supabase
+        .from('properties')
+        .delete()
+        .eq('id', id);
+        
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error deleting property from Supabase:', err);
+    }
   };
 
-  const updatePropertyStatus = (id: string, status: PropertyStatus) => {
+  const updatePropertyStatus = async (id: string, status: PropertyStatus) => {
     setProperties(properties.map(p => 
       p.id === id ? { ...p, status } : p
     ));
+    
+    if (!supabase) return;
+    
+    try {
+      const { error } = await supabase
+        .from('properties')
+        .update({ status })
+        .eq('id', id);
+        
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error updating property status in Supabase:', err);
+    }
   };
 
   const addLead = (lead: Lead) => {
@@ -343,10 +537,85 @@ export function PropertyProvider({ children }: { children: React.ReactNode }) {
     setAdvertisements([ad, ...advertisements]);
   };
 
-  const refreshData = () => {
-    console.log('Refreshing data from Supabase...');
-    // Mock refresh
+  const refreshData = async () => {
+    if (!supabase) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .select('*')
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      
+      if (data) {
+        // Map snake_case from Supabase to camelCase for the app
+        const mappedProperties = data.map((p: any) => ({
+          ...p,
+          geopoint: p.geopoint || p.geo_point,
+          addedAt: p.added_at || p.addedAt || p.created_at,
+          visitTime: p.visit_time || p.visitTime,
+          ownerName: p.owner_name || p.ownerName,
+          phoneNumber: p.phone_number || p.phoneNumber,
+          whatsappNumber: p.whatsapp_number || p.whatsappNumber,
+          cornerSideFront: p.corner_side_front || p.cornerSideFront,
+          cornerSideSide: p.corner_side_side || p.cornerSideSide,
+          openSides: p.open_sides || p.openSides,
+          plotAreaSqYd: p.plot_area_sq_yd || p.plotAreaSqYd,
+          plotAreaSqMtr: p.plot_area_sq_mtr || p.plotAreaSqMtr,
+          dimensionsLength: p.dimensions_length || p.dimensionsLength,
+          dimensionsWidth: p.dimensions_width || p.dimensionsWidth,
+          builtUpAreaSqFt: p.built_up_area_sq_ft || p.builtUpAreaSqFt,
+          frontage: p.frontage,
+          floorLevel: p.floor_level || p.floorLevel,
+          washroomAvailable: p.washroom_available ?? p.washroomAvailable,
+          pantryAvailable: p.pantry_available ?? p.pantryAvailable,
+          roadType: p.road_type || p.roadType,
+          roadWidth: p.road_width || p.roadWidth,
+          gatedSociety: p.gated_society ?? p.gatedSociety,
+          carParking: p.car_parking ?? p.carParking,
+          bikeParking: p.bike_parking ?? p.bikeParking,
+          mutationDoc: p.mutation_doc || p.mutationDoc,
+          saleDeedDoc: p.sale_deed_doc || p.saleDeedDoc,
+          gpaDoc: p.gpa_doc || p.gpaDoc,
+          possessionLetterDoc: p.possession_letter_doc || p.possessionLetterDoc,
+          leaseDoc: p.lease_doc || p.leaseDoc,
+          leaseTenure: p.lease_tenure || p.leaseTenure,
+          propertyTaxPaid: p.property_tax_paid ?? p.propertyTaxPaid,
+          electricityBillPaid: p.electricity_bill_paid ?? p.electricityBillPaid,
+          houseTaxPaid: p.house_tax_paid ?? p.houseTaxPaid,
+          siteMapApproved: p.site_map_approved ?? p.siteMapApproved,
+          quotedBy: p.quoted_by || p.quotedBy,
+          pricingRemarks: p.pricing_remarks || p.pricingRemarks,
+          clearTitle: p.clear_title ?? p.clearTitle,
+          disputed: p.disputed ?? p.disputed,
+          underMortgage: p.under_mortgage ?? p.underMortgage,
+          mortgageBankName: p.mortgage_bank_name || p.mortgageBankName,
+          jointOwnership: p.joint_ownership ?? p.jointOwnership,
+          freehold: p.freehold ?? p.freehold,
+          leasehold: p.leasehold ?? p.leasehold,
+          surroundingResidential: p.surrounding_residential ?? p.surroundingResidential,
+          surroundingCommercial: p.surrounding_commercial ?? p.surroundingCommercial,
+          surroundingMixed: p.surrounding_mixed ?? p.surroundingMixed,
+          nearbyHospital: p.nearby_hospital ?? p.nearbyHospital,
+          nearbyPark: p.nearby_park ?? p.nearbyPark,
+          nearbySchool: p.nearby_school ?? p.nearbySchool,
+          nearbyMarket: p.nearby_market ?? p.nearbyMarket,
+          nearbyPublicTransport: p.nearby_public_transport ?? p.nearbyPublicTransport,
+          secondVisitTime: p.second_visit_time || p.secondVisitTime,
+          secondVisitConfirmed: p.second_visit_confirmed ?? p.secondVisitConfirmed,
+          is_public: p.is_public ?? p.isPublic
+        }));
+        setProperties(mappedProperties as Property[]);
+      }
+    } catch (err) {
+      console.error('Error fetching properties:', err);
+    }
   };
+
+  useEffect(() => {
+    refreshData();
+  }, []);
 
   return (
     <PropertyContext.Provider value={{ 

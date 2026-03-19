@@ -1,15 +1,33 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { MapWrapper } from './MapWrapper';
 import { useProperties } from '../context/PropertyContext';
 
 export function PropertyMap() {
-  const { properties } = useProperties();
+  const { properties, globalLocation } = useProperties();
+  const [center, setCenter] = useState({ lat: 28.8955, lng: 76.6066 }); // Fallback to Rohtak
   
-  // Filter for properties for sale
-  const saleProperties = properties.filter(p => p.purpose === 'Sale');
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setCenter({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+        },
+        () => {
+          // Fallback already set to Rohtak
+        }
+      );
+    }
+  }, []);
   
-  // Default center (Rohtak as requested)
-  const defaultCenter = { lat: 28.8955, lng: 76.6066 };
+  // Filter for properties for sale and matching city if not "All India"
+  const saleProperties = properties.filter(p => {
+    const matchesPurpose = p.purpose === 'Sale';
+    const matchesLocation = globalLocation === 'All India' || p.city === globalLocation;
+    return matchesPurpose && matchesLocation;
+  });
   
   const markers = saleProperties.map(p => ({
     id: p.id,
@@ -21,7 +39,7 @@ export function PropertyMap() {
   return (
     <div className="w-full h-[400px] mb-6">
       <MapWrapper 
-        center={defaultCenter} 
+        center={center} 
         zoom={12} 
         markers={markers} 
       />

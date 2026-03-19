@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Home, Users, Calendar, Bell, Menu, X, Key, Settings, Shield, LogOut, Fingerprint, Calculator, MapPin, Megaphone, Search, Handshake, Globe, BarChart3 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { MOCK_PROPERTIES } from '../data';
 import { differenceInMinutes } from 'date-fns';
 import { useProperties } from '../context/PropertyContext';
 
@@ -11,8 +10,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState<string[]>([]);
-  const { mode, setMode, user, setUser, globalLocation, setGlobalLocation } = useProperties();
-  const [showPasskeyPrompt, setShowPasskeyPrompt] = useState(false);
+  const { mode, setMode, user, setUser, globalLocation, setGlobalLocation, properties } = useProperties();
   const [citySearch, setCitySearch] = useState('');
   const [showCityDropdown, setShowCityDropdown] = useState(false);
 
@@ -26,24 +24,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Biometric popup logic removed as per user request.
-    // User should only enable via Settings.
   }, [user]);
-
-  const handleEnablePasskey = () => {
-    // Mock enabling passkey
-    if (user) {
-      setUser({ ...user, hasPasskey: true });
-    }
-    setShowPasskeyPrompt(false);
-    alert('Passkey (FaceID/Fingerprint) enabled successfully!');
-  };
 
   const NAV_ITEMS = [
     { name: 'Properties', path: '/', icon: Home, showInMarketplace: true },
     { name: 'Rentals', path: '/rentals', icon: Handshake, showInMarketplace: true },
     { name: 'Client Leads', path: '/leads', icon: Users, showInMarketplace: false },
-    { name: 'Market', path: '/market', icon: Globe, showInMarketplace: true },
-    { name: 'Analytics', path: '/analytics', icon: BarChart3, showInMarketplace: false },
+    { name: 'Rental Leads', path: '/rental-leads', icon: Users, showInMarketplace: false },
+    { name: 'Property Required', path: '/property-required', icon: Search, showInMarketplace: false },
+    { name: 'Brokers', path: '/brokers', icon: Shield, showInMarketplace: true },
+    { name: 'Ads', path: '/ads', icon: Megaphone, showInMarketplace: true },
+    { name: 'Schedule', path: '/schedule', icon: Calendar, showInMarketplace: false },
+    { name: 'Tools', path: '/tools', icon: Calculator, showInMarketplace: true },
     { name: 'Settings', path: '/settings', icon: Settings, showInMarketplace: false },
     ...(user?.isAdmin ? [{ name: 'Admin', path: '/admin', icon: Shield, showInMarketplace: false }] : [])
   ];
@@ -56,7 +48,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       const now = new Date();
       const newNotifications: string[] = [];
       
-      MOCK_PROPERTIES.forEach(prop => {
+      properties.forEach(prop => {
         if (prop.visitTime) {
           const visitDate = new Date(prop.visitTime);
           const diff = differenceInMinutes(visitDate, now);
@@ -75,7 +67,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     checkReminders();
     const interval = setInterval(checkReminders, 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [properties]);
 
   const handleLogout = () => {
     setUser(null);
@@ -298,45 +290,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
           className="fixed inset-0 bg-slate-900/20 z-20 md:hidden backdrop-blur-sm"
           onClick={() => setIsMobileMenuOpen(false)}
         />
-      )}
-
-      {/* Passkey Prompt Modal */}
-      {showPasskeyPrompt && (
-        <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative animate-in fade-in zoom-in duration-200">
-            <button 
-              onClick={() => setShowPasskeyPrompt(false)}
-              className="absolute top-4 right-4 p-2 text-slate-400 hover:bg-slate-100 rounded-full transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            
-            <div className="flex flex-col items-center text-center space-y-4">
-              <div className="w-16 h-16 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center">
-                <Fingerprint className="w-8 h-8" />
-              </div>
-              <h3 className="text-xl font-bold text-slate-900">Enable Faster Login</h3>
-              <p className="text-slate-500 text-sm">
-                Use FaceID or Fingerprint to sign in instantly next time. It's secure and convenient.
-              </p>
-              
-              <div className="w-full space-y-3 pt-4">
-                <button 
-                  onClick={handleEnablePasskey}
-                  className="w-full py-3 px-4 bg-blue-700 text-white rounded-xl font-medium hover:bg-blue-800 transition-colors shadow-sm"
-                >
-                  Enable FaceID / Fingerprint
-                </button>
-                <button 
-                  onClick={() => setShowPasskeyPrompt(false)}
-                  className="w-full py-3 px-4 bg-slate-100 text-slate-700 rounded-xl font-medium hover:bg-slate-200 transition-colors"
-                >
-                  Maybe Later
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );

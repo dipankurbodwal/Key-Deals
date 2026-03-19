@@ -1,6 +1,6 @@
 export type PropertyStatus = 'Available' | 'Sold' | 'Plan Cancelled';
 
-export type PropertyType = 'Residential Plot' | 'Residential House' | 'Commercial Space' | 'Shop' | 'Office space' | 'Farm House' | 'Farm Land' | 'Flat/Apartment' | 'Office' | 'Co-working Space';
+export type PropertyType = 'Residential Plot' | 'Residential House' | 'Commercial space' | 'Shop' | 'Office space' | 'Farm House' | 'Farm Land' | 'Flat/Apartment' | 'Office' | 'Co-working Space' | 'P.G';
 export type FacingType = 'East' | 'West' | 'South' | 'North' | 'South-East' | 'South-West' | 'North-East' | 'North-West';
 export type RoadType = 'Paved' | 'Kacha' | 'Main Road';
 export type DocStatus = 'Original' | 'Photocopy' | 'None';
@@ -45,6 +45,9 @@ export interface Property {
   plotAreaSqMtr?: number;
   dimensionsLength?: number;
   dimensionsWidth?: number;
+  floorLevel?: string;
+  washroomAvailable?: boolean;
+  pantryAvailable?: boolean;
   
   // Construction Details
   builtUpAreaSqFt?: number;
@@ -67,7 +70,7 @@ export interface Property {
   wardrobes?: number;
   furnishing?: boolean;
   floorNumber?: number;
-  frontage?: string;
+  frontage?: number;
   loadingDock?: boolean;
   ceilingHeight?: string;
   amenities?: {
@@ -245,6 +248,16 @@ export interface User {
     projectLocation?: string;
     projectDetails?: string;
     reraApproved?: boolean;
+    reraNumber?: string;
+    website?: string;
+    operatingCity?: string;
+    yearsOfExperience?: number;
+    specialization?: 'Residential' | 'Commercial' | 'Both';
+    operatingCities?: string;
+    projectGeoLocation?: {
+      lat: number;
+      lng: number;
+    };
   };
   clientRequirements?: {
     budgetMin: number;
@@ -255,5 +268,10 @@ export interface User {
     purpose?: PurchasePurpose;
     location?: string;
     postedAt?: string;
+    timeline?: 'Immediate' | '1-3 months' | '3-6 months' | '6+ months';
+  };
+  ownerProfile?: {
+    propertyType?: string;
+    purpose?: 'Sell' | 'Rent out';
   };
 }

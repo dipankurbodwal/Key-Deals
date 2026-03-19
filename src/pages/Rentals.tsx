@@ -57,7 +57,7 @@ export function Rentals() {
           <div>
             <p className="text-sm font-medium text-slate-500">Commercial</p>
             <p className="text-2xl font-bold text-slate-900">
-              {rentalProperties.filter(p => p.type === 'Commercial Space' || p.type === 'Shop' || p.type === 'Office space').length}
+              {rentalProperties.filter(p => ['Commercial space', 'Shop', 'Office space', 'Co-working Space', 'Warehouse', 'Farm Land'].includes(p.type)).length}
             </p>
           </div>
         </div>
@@ -68,7 +68,7 @@ export function Rentals() {
           <div>
             <p className="text-sm font-medium text-slate-500">Residential</p>
             <p className="text-2xl font-bold text-slate-900">
-              {rentalProperties.filter(p => p.type === 'Residential House' || p.type === 'Flat/Apartment').length}
+              {rentalProperties.filter(p => ['Residential House', 'Flat/Apartment', 'P.G', 'Residential Plot'].includes(p.type)).length}
             </p>
           </div>
         </div>
@@ -78,7 +78,11 @@ export function Rentals() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {rentalProperties.length > 0 ? (
           rentalProperties.map((property) => (
-            <div key={property.id} className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-xl transition-all group cursor-pointer">
+            <div 
+              key={property.id} 
+              onClick={() => navigate(`/property/${property.id}`)}
+              className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-xl transition-all group cursor-pointer"
+            >
               <div className="relative h-56">
                 <img 
                   src={property.images[0] || 'https://picsum.photos/seed/' + property.id + '/800/600'} 
@@ -127,7 +131,15 @@ export function Rentals() {
                     </div>
                     <span className="text-sm font-medium text-slate-700">{property.type}</span>
                   </div>
-                  <button className="text-blue-600 font-bold text-sm hover:underline">View Details</button>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/property/${property.id}`);
+                    }}
+                    className="text-blue-600 font-bold text-sm hover:underline"
+                  >
+                    View Details
+                  </button>
                 </div>
               </div>
             </div>

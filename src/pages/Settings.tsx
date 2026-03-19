@@ -176,6 +176,18 @@ export function Settings() {
                 <ArrowRight className="w-4 h-4 text-blue-700 group-hover:translate-x-1 transition-transform" />
               </Link>
 
+              {/* Terms & Conditions */}
+              <Link
+                to="/terms"
+                className="flex items-center justify-between p-3 bg-white/20 rounded-xl border border-keydeals-border group hover:bg-white/30 transition-all"
+              >
+                <div className="flex items-center gap-3">
+                  <FileText className="w-5 h-5 text-blue-700" />
+                  <span className="text-sm font-bold text-keydeals-text-primary">Terms & Conditions</span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-blue-700 group-hover:translate-x-1 transition-transform" />
+              </Link>
+
               {/* Biometrics */}
               <div className="flex items-center justify-between p-3 bg-white/20 rounded-xl border border-keydeals-border">
                 <div className="flex items-center gap-3">
@@ -183,6 +195,7 @@ export function Settings() {
                   <span className="text-sm font-semibold text-keydeals-text-primary">{t('settings.biometrics')}</span>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setBiometricsEnabled(!biometricsEnabled)}
                   className={cn(
                     "w-12 h-6 rounded-full transition-colors relative",

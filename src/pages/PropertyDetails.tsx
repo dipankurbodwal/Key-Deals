@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { MapPin, Phone, MessageCircle, Share2, Download, ArrowLeft, Calendar, User, Navigation, Edit, Trash2 } from 'lucide-react';
+import { MapPin, Phone, MessageCircle, Share2, Download, ArrowLeft, Calendar, User, Navigation, Edit, Trash2, Maximize2, Layers, Bath, ChefHat, Wind, Droplets, Zap, AirVent, IndianRupee, ShieldCheck, Users, Building2, ArrowDown } from 'lucide-react';
 import { useProperties } from '../context/PropertyContext';
 import { cn } from '../lib/utils';
 import { format } from 'date-fns';
@@ -133,42 +133,107 @@ END:VCARD`;
 
           {/* Detailed Specs */}
           <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-            <h3 className="text-xl font-bold text-slate-900 mb-4">Property Specs</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-y-6 gap-x-4">
+            <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+              <Layers className="w-5 h-5 text-blue-600" /> Property Specs
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
               {property.type && (
-                <div>
-                  <p className="text-sm font-medium text-slate-500">Type</p>
-                  <p className="font-semibold text-slate-900">{property.type}</p>
-                </div>
-              )}
-              {property.facing && (
-                <div>
-                  <p className="text-sm font-medium text-slate-500">Facing</p>
-                  <p className="font-semibold text-slate-900">{property.facing}</p>
-                </div>
-              )}
-              {property.plotAreaSqYd && (
-                <div>
-                  <p className="text-sm font-medium text-slate-500">Plot Area</p>
-                  <p className="font-semibold text-slate-900">{property.plotAreaSqYd} Sq Yd</p>
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-slate-50 rounded-lg">
+                    <Building2 className="w-4 h-4 text-slate-400" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Type</p>
+                    <p className="font-bold text-slate-900">{property.type}</p>
+                  </div>
                 </div>
               )}
               {property.builtUpAreaSqFt && (
-                <div>
-                  <p className="text-sm font-medium text-slate-500">Built-up Area</p>
-                  <p className="font-semibold text-slate-900">{property.builtUpAreaSqFt} Sq Ft</p>
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-slate-50 rounded-lg">
+                    <Maximize2 className="w-4 h-4 text-slate-400" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Area</p>
+                    <p className="font-bold text-slate-900">{property.builtUpAreaSqFt} Sq Ft</p>
+                  </div>
                 </div>
               )}
-              {property.roadWidth && (
-                <div>
-                  <p className="text-sm font-medium text-slate-500">Road Width</p>
-                  <p className="font-semibold text-slate-900">{property.roadWidth} ft ({property.roadType})</p>
+              {property.dimensionsLength && property.dimensionsWidth && (
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-slate-50 rounded-lg">
+                    <Maximize2 className="w-4 h-4 text-slate-400" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Dimensions</p>
+                    <p className="font-bold text-slate-900">{property.dimensionsLength} x {property.dimensionsWidth} ft</p>
+                  </div>
                 </div>
               )}
-              {property.quotedBy && (
-                <div>
-                  <p className="text-sm font-medium text-slate-500">Quoted By</p>
-                  <p className="font-semibold text-slate-900">{property.quotedBy}</p>
+              {property.frontage && (
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-slate-50 rounded-lg">
+                    <ArrowLeft className="w-4 h-4 text-slate-400 rotate-45" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Frontage</p>
+                    <p className="font-bold text-slate-900">{property.frontage} ft</p>
+                  </div>
+                </div>
+              )}
+              {property.floorLevel && (
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-slate-50 rounded-lg">
+                    <Layers className="w-4 h-4 text-slate-400" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Floor Level</p>
+                    <p className="font-bold text-slate-900">{property.floorLevel}</p>
+                  </div>
+                </div>
+              )}
+              {property.washroomAvailable !== undefined && (
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-slate-50 rounded-lg">
+                    <Bath className="w-4 h-4 text-slate-400" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Washroom</p>
+                    <p className="font-bold text-slate-900">{property.washroomAvailable ? 'Available' : 'Not Available'}</p>
+                  </div>
+                </div>
+              )}
+              {property.pantryAvailable !== undefined && (
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-slate-50 rounded-lg">
+                    <ChefHat className="w-4 h-4 text-slate-400" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Pantry</p>
+                    <p className="font-bold text-slate-900">{property.pantryAvailable ? 'Available' : 'Not Available'}</p>
+                  </div>
+                </div>
+              )}
+              {property.ceilingHeight && (
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-slate-50 rounded-lg">
+                    <ArrowDown className="w-4 h-4 text-slate-400" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Ceiling Height</p>
+                    <p className="font-bold text-slate-900">{property.ceilingHeight}</p>
+                  </div>
+                </div>
+              )}
+              {property.securityDeposit && (
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-slate-50 rounded-lg">
+                    <ShieldCheck className="w-4 h-4 text-slate-400" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Security Deposit</p>
+                    <p className="font-bold text-slate-900">₹ {property.securityDeposit}</p>
+                  </div>
                 </div>
               )}
             </div>

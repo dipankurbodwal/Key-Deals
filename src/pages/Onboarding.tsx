@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate, Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   Building2, 
   User as UserIcon, 
@@ -14,7 +14,8 @@ import {
   FileText,
   ShieldCheck,
   MessageSquare,
-  Zap
+  Zap,
+  Globe
 } from 'lucide-react';
 import { useProperties } from '../context/PropertyContext';
 import { UserRole, User } from '../types';
@@ -43,7 +44,24 @@ export function Onboarding() {
     developerName: '',
     projectLocation: '',
     projectDetails: '',
-    reraApproved: false
+    reraApproved: false,
+    termsAccepted: false,
+    // New fields
+    operatingCity: '',
+    reraNumber: '',
+    website: '',
+    city: '',
+    address: '',
+    propertyType: 'Flat/Apartment',
+    budgetMin: '',
+    budgetMax: '',
+    landmarks: '',
+    yearsOfExperience: '',
+    specialization: 'Residential',
+    operatingCities: '',
+    timeline: 'Immediate',
+    projectLat: null as number | null,
+    projectLng: null as number | null
   });
 
   const [showAiMatchAlert, setShowAiMatchAlert] = useState(false);
@@ -66,8 +84,37 @@ export function Onboarding() {
         phone: user.phone || '',
         companyName: user.businessProfile?.companyName || '',
         contactPerson: user.businessProfile?.contactPerson || '',
-        contactNumber: user.businessProfile?.contactNumber || ''
+        contactNumber: user.businessProfile?.contactNumber || '',
+        yearsOfExperience: user.businessProfile?.yearsOfExperience?.toString() || '',
+        specialization: user.businessProfile?.specialization || 'Residential',
+        operatingCities: user.businessProfile?.operatingCities || '',
+        operatingCity: user.city || '',
+        city: user.city || '',
+        address: user.address || '',
+        timeline: user.clientRequirements?.timeline || 'Immediate',
+        projectLat: user.businessProfile?.projectGeoLocation?.lat || null,
+        projectLng: user.businessProfile?.projectGeoLocation?.lng || null
       }));
+    }
+  };
+
+  const handleCaptureLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setFormData(prev => ({
+            ...prev,
+            projectLat: position.coords.latitude,
+            projectLng: position.coords.longitude
+          }));
+        },
+        (error) => {
+          console.error("Error capturing location:", error);
+          alert("Could not capture location. Please ensure location permissions are granted.");
+        }
+      );
+    } else {
+      alert("Geolocation is not supported by this browser.");
     }
   };
 
@@ -99,28 +146,63 @@ export function Onboarding() {
           projectLocation: selectedRole === 'Developer' ? formData.projectLocation : undefined,
           projectDetails: selectedRole === 'Developer' ? formData.projectDetails : undefined,
           reraApproved: selectedRole === 'Developer' ? formData.reraApproved : undefined,
+          reraNumber: selectedRole === 'Broker' ? formData.reraNumber : undefined,
+          website: selectedRole === 'Developer' ? formData.website : undefined,
+          operatingCity: selectedRole === 'Broker' ? formData.operatingCity : undefined,
+          yearsOfExperience: selectedRole === 'Broker' ? Number(formData.yearsOfExperience) || 0 : undefined,
+          specialization: selectedRole === 'Broker' ? formData.specialization as any : undefined,
+          operatingCities: selectedRole === 'Developer' ? formData.operatingCities : undefined,
+          projectGeoLocation: selectedRole === 'Developer' && formData.projectLat && formData.projectLng ? {
+            lat: formData.projectLat,
+            lng: formData.projectLng
+          } : undefined,
         } : undefined,
         clientRequirements: selectedRole === 'Client' ? {
           purpose: formData.purpose as 'Purchase' | 'On Rent',
-          budgetMin: 0,
-          budgetMax: 0,
-          landmarks: '',
-          propertyType: 'Flat/Apartment',
-          directOwnersOnly: formData.directOwnersOnly
-        } : undefined
+          budgetMin: Number(formData.budgetMin) || 0,
+          budgetMax: Number(formData.budgetMax) || 0,
+          landmarks: formData.landmarks,
+          propertyType: formData.propertyType,
+          directOwnersOnly: formData.directOwnersOnly,
+          timeline: formData.timeline as any
+        } : undefined,
+        ownerProfile: selectedRole === 'Property Owner' ? {
+          propertyType: formData.propertyType,
+          purpose: formData.purpose as 'Sell' | 'Rent out'
+        } : undefined,
+        city: selectedRole === 'Property Owner' ? formData.city : (selectedRole === 'Broker' ? formData.operatingCity : undefined),
+        address: selectedRole === 'Broker' ? formData.address : undefined
       };
 
       // Update Supabase if user is logged in
       if (supabase && user?.id) {
+        const userEmail = user.email || (await supabase.auth.getUser()).data.user?.email || formData.email || '';
+        
+        // Update auth user metadata to ensure all custom fields are saved
+        const { error: authError } = await supabase.auth.updateUser({
+          data: {
+            role: selectedRole,
+            businessProfile: updatedUser.businessProfile,
+            clientRequirements: updatedUser.clientRequirements,
+            ownerProfile: updatedUser.ownerProfile,
+            city: updatedUser.city,
+            address: updatedUser.address,
+            onboardingCompleted: true
+          }
+        });
+
+        if (authError) console.error('Error updating auth metadata:', authError);
+
         const { error: supabaseError } = await supabase
           .from('profiles')
           .upsert({
             id: user.id,
             full_name: updatedUser.name,
             phone_number: updatedUser.phone,
+            company_name: updatedUser.businessProfile?.companyName || '',
             role: selectedRole,
-            company_name: updatedUser.businessProfile?.companyName,
             onboarding_completed: true,
+            created_at: user.createdAt || new Date().toISOString(),
             updated_at: new Date().toISOString()
           });
 
@@ -256,7 +338,12 @@ export function Onboarding() {
 
               <div className="mb-10">
                 <h2 className="text-3xl font-black text-[#1E3A8A] mb-2">Complete your profile</h2>
-                <p className="text-slate-600 font-medium">We need a few more details to set up your {selectedRole} account.</p>
+                <p className="text-slate-600 font-medium">
+                  {selectedRole === 'Broker' && "Set up your broker profile to start managing inventory and connecting with clients."}
+                  {selectedRole === 'Property Owner' && "Tell us a bit about yourself so we can help you list your property effectively."}
+                  {selectedRole === 'Client' && "Help us understand your requirements so we can find the perfect match for you."}
+                  {selectedRole === 'Developer' && "Create your developer profile to showcase your projects to our network."}
+                </p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -306,6 +393,78 @@ export function Onboarding() {
                         </div>
                       </div>
                     </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-bold text-[#1E3A8A] ml-1">Operating City</label>
+                        <div className="relative">
+                          <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                          <input
+                            required
+                            name="operatingCity"
+                            value={formData.operatingCity}
+                            onChange={handleInputChange}
+                            className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
+                            placeholder="e.g. Mumbai, Delhi"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-bold text-[#1E3A8A] ml-1">RERA Number (Optional)</label>
+                        <div className="relative">
+                          <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                          <input
+                            name="reraNumber"
+                            value={formData.reraNumber}
+                            onChange={handleInputChange}
+                            className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
+                            placeholder="Registration No."
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-bold text-[#1E3A8A] ml-1">Office Address</label>
+                      <div className="relative">
+                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                        <input
+                          required
+                          name="address"
+                          value={formData.address}
+                          onChange={handleInputChange}
+                          className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
+                          placeholder="Complete office address"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-bold text-[#1E3A8A] ml-1">Years of Experience</label>
+                        <div className="relative">
+                          <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                          <input
+                            type="number"
+                            name="yearsOfExperience"
+                            value={formData.yearsOfExperience}
+                            onChange={handleInputChange}
+                            className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
+                            placeholder="e.g. 5"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-bold text-[#1E3A8A] ml-1">Specialization</label>
+                        <select
+                          name="specialization"
+                          value={formData.specialization}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
+                        >
+                          <option value="Residential">Residential</option>
+                          <option value="Commercial">Commercial</option>
+                          <option value="Both">Both</option>
+                        </select>
+                      </div>
+                    </div>
                   </>
                 )}
 
@@ -325,18 +484,34 @@ export function Onboarding() {
                         />
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-bold text-[#1E3A8A] ml-1">Phone Number</label>
-                      <div className="relative">
-                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                        <input
-                          required
-                          name="phone"
-                          value={formData.phone}
-                          onChange={handleInputChange}
-                          className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
-                          placeholder="Your contact number"
-                        />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-bold text-[#1E3A8A] ml-1">Phone Number</label>
+                        <div className="relative">
+                          <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                          <input
+                            required
+                            name="phone"
+                            value={formData.phone}
+                            onChange={handleInputChange}
+                            className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
+                            placeholder="Your contact number"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-bold text-[#1E3A8A] ml-1">City</label>
+                        <div className="relative">
+                          <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                          <input
+                            required
+                            name="city"
+                            value={formData.city}
+                            onChange={handleInputChange}
+                            className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
+                            placeholder="City"
+                          />
+                        </div>
                       </div>
                     </div>
                     <div className="space-y-2">
@@ -358,6 +533,22 @@ export function Onboarding() {
                           </button>
                         ))}
                       </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-bold text-[#1E3A8A] ml-1">Property Type</label>
+                      <select
+                        name="propertyType"
+                        value={formData.propertyType}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
+                      >
+                        <option value="Flat/Apartment">Flat/Apartment</option>
+                        <option value="House/Villa">House/Villa</option>
+                        <option value="Plot/Land">Plot/Land</option>
+                        <option value="Commercial Space">Commercial Space</option>
+                        <option value="P.G">P.G</option>
+                        <option value="Co-working Space">Co-working Space</option>
+                      </select>
                     </div>
                   </>
                 )}
@@ -411,6 +602,75 @@ export function Onboarding() {
                           </button>
                         ))}
                       </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-bold text-[#1E3A8A] ml-1">Property Type</label>
+                        <select
+                          name="propertyType"
+                          value={formData.propertyType}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
+                        >
+                          <option value="Flat/Apartment">Flat/Apartment</option>
+                          <option value="House/Villa">House/Villa</option>
+                          <option value="Plot/Land">Plot/Land</option>
+                          <option value="Commercial Space">Commercial Space</option>
+                          <option value="P.G">P.G</option>
+                          <option value="Co-working Space">Co-working Space</option>
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-bold text-[#1E3A8A] ml-1">Preferred Location</label>
+                        <div className="relative">
+                          <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                          <input
+                            name="landmarks"
+                            value={formData.landmarks}
+                            onChange={handleInputChange}
+                            className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
+                            placeholder="e.g. Downtown, Sector 14"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-bold text-[#1E3A8A] ml-1">Min Budget (₹)</label>
+                        <input
+                          type="number"
+                          name="budgetMin"
+                          value={formData.budgetMin}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
+                          placeholder="0"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-bold text-[#1E3A8A] ml-1">Max Budget (₹)</label>
+                        <input
+                          type="number"
+                          name="budgetMax"
+                          value={formData.budgetMax}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
+                          placeholder="Any"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-bold text-[#1E3A8A] ml-1">When do you plan to move/buy?</label>
+                      <select
+                        name="timeline"
+                        value={formData.timeline}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
+                      >
+                        <option value="Immediate">Immediate</option>
+                        <option value="1-3 months">1-3 months</option>
+                        <option value="3-6 months">3-6 months</option>
+                        <option value="6+ months">6+ months</option>
+                      </select>
                     </div>
                     <div className="pt-2">
                       <label className="flex items-center gap-3 cursor-pointer p-4 rounded-2xl border-2 border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors">
@@ -490,6 +750,29 @@ export function Onboarding() {
                           placeholder="City or Area"
                         />
                       </div>
+                      <div className="mt-2 p-4 rounded-2xl border-2 border-slate-100 bg-slate-50/50">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-bold text-[#1E3A8A]">Geo Capturing for Client Site Navigation</span>
+                          <button
+                            type="button"
+                            onClick={handleCaptureLocation}
+                            className="px-4 py-2 bg-blue-100 text-[#1E3A8A] text-sm font-bold rounded-xl hover:bg-blue-200 transition-colors flex items-center gap-2"
+                          >
+                            <MapPin className="w-4 h-4" />
+                            Capture Location
+                          </button>
+                        </div>
+                        {formData.projectLat && formData.projectLng ? (
+                          <div className="text-sm text-slate-600 flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            Location captured: {formData.projectLat.toFixed(6)}, {formData.projectLng.toFixed(6)}
+                          </div>
+                        ) : (
+                          <div className="text-sm text-slate-500">
+                            Capture location to enable precise site navigation for clients.
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-bold text-[#1E3A8A] ml-1">Project Details</label>
@@ -503,6 +786,33 @@ export function Onboarding() {
                           rows={3}
                           className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50 resize-none"
                           placeholder="Briefly describe your project..."
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-bold text-[#1E3A8A] ml-1">Website (Optional)</label>
+                      <div className="relative">
+                        <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                        <input
+                          type="url"
+                          name="website"
+                          value={formData.website}
+                          onChange={handleInputChange}
+                          className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
+                          placeholder="https://www.example.com"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-bold text-[#1E3A8A] ml-1">Operating Cities</label>
+                      <div className="relative">
+                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                        <input
+                          name="operatingCities"
+                          value={formData.operatingCities}
+                          onChange={handleInputChange}
+                          className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
+                          placeholder="e.g. Mumbai, Pune, Bangalore"
                         />
                       </div>
                     </div>
@@ -531,20 +841,44 @@ export function Onboarding() {
                   </div>
                 )}
 
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full bg-[#1E3A8A] text-white py-5 rounded-2xl font-black text-lg shadow-xl shadow-blue-900/20 hover:bg-[#1E3A8A]/90 transition-all disabled:opacity-70 flex items-center justify-center gap-3"
-                >
-                  {isLoading ? (
-                    <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      Complete Setup
-                      <ArrowRight className="w-6 h-6" />
-                    </>
-                  )}
-                </button>
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3 p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                    <div className="flex items-center h-5">
+                      <input
+                        id="termsAccepted"
+                        name="termsAccepted"
+                        type="checkbox"
+                        required
+                        checked={formData.termsAccepted}
+                        onChange={handleInputChange}
+                        className="w-5 h-5 text-[#1E3A8A] rounded-lg focus:ring-[#1E3A8A] cursor-pointer"
+                      />
+                    </div>
+                    <div className="text-sm">
+                      <label htmlFor="termsAccepted" className="font-bold text-[#1E3A8A] cursor-pointer">
+                        I agree to the <Link to="/terms" target="_blank" className="underline decoration-blue-300 hover:decoration-blue-700 transition-colors">Terms & Conditions</Link>
+                      </label>
+                      <p className="text-slate-500 text-xs mt-1">
+                        By checking this box, you acknowledge that you have read and agree to our professional terms of service.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isLoading || !formData.termsAccepted}
+                    className="w-full bg-[#1E3A8A] text-white py-5 rounded-2xl font-black text-lg shadow-xl shadow-blue-900/20 hover:bg-[#1E3A8A]/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+                  >
+                    {isLoading ? (
+                      <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        Complete Setup
+                        <ArrowRight className="w-6 h-6" />
+                      </>
+                    )}
+                  </button>
+                </div>
               </form>
             </motion.div>
           )}

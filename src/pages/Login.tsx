@@ -19,14 +19,10 @@ export function Login() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [bioFailCount, setBioFailCount] = useState(0);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
 
   useEffect(() => {
-    // Auto-trigger biometrics if enabled and on landing
-    if (biometricsEnabled && view === 'landing' && bioFailCount < 3) {
-      handleBiometricLogin();
-    }
+    // View changed
   }, [view]);
 
   const handleLogin = (e: React.FormEvent) => {
@@ -58,6 +54,26 @@ export function Login() {
     }
   };
 
+  const handleBiometricLogin = () => {
+    setIsAuthenticating(true);
+    // Simulate biometric auth
+    setTimeout(() => {
+      setUser({
+        id: 'u1',
+        email: 'agent@keydeals.com',
+        name: 'Agent',
+        phone: '+1234567890',
+        isAdmin: false,
+        isSubscribed: true,
+        onboardingCompleted: true,
+        referralCount: 0,
+        referralEarnedCount: 0
+      });
+      setIsAuthenticating(false);
+      navigate('/');
+    }, 1500);
+  };
+
   const handleSignUp = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -81,41 +97,6 @@ export function Login() {
       referralEarnedCount: 0
     });
     navigate('/onboarding');
-  };
-
-  const handleBiometricLogin = async () => {
-    if (bioFailCount >= 3) {
-      setError('Biometric login failed too many times. Please use your password.');
-      setView('signin');
-      return;
-    }
-
-    setIsAuthenticating(true);
-    // Mock biometric prompt
-    setTimeout(() => {
-      const success = Math.random() > 0.2; // 80% success rate for mock
-      if (success) {
-        setUser({
-          id: '1',
-          email: 'agent@keydeals.com',
-          name: 'Agent',
-          phone: '+1234567890',
-          isAdmin: false,
-          isSubscribed: true,
-          onboardingCompleted: true,
-          referralCount: 0,
-          referralEarnedCount: 0
-        });
-        navigate('/');
-      } else {
-        setBioFailCount(prev => prev + 1);
-        setIsAuthenticating(false);
-        if (bioFailCount + 1 >= 3) {
-          setView('signin');
-          setError('Biometric authentication failed. Please sign in manually.');
-        }
-      }
-    }, 1500);
   };
 
   return (
@@ -174,24 +155,24 @@ export function Login() {
                     <UserPlus className="w-5 h-5" />
                     Create Account
                   </button>
-                </div>
 
-                {biometricsEnabled && bioFailCount < 3 && (
-                  <div className="pt-4 border-t border-keydeals-border">
-                    <button
-                      onClick={handleBiometricLogin}
-                      disabled={isAuthenticating}
-                      className="w-full flex items-center justify-center gap-3 py-3 text-keydeals-text-secondary hover:text-blue-700 transition-colors font-medium"
-                    >
-                      {isAuthenticating ? (
-                        <div className="w-5 h-5 border-2 border-blue-700 border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        <Fingerprint className="w-6 h-6 text-blue-700" />
-                      )}
-                      {isAuthenticating ? 'Authenticating...' : 'Use Biometrics'}
-                    </button>
-                  </div>
-                )}
+                  {biometricsEnabled && (
+                    <div className="pt-4 border-t border-keydeals-border">
+                      <button
+                        onClick={handleBiometricLogin}
+                        disabled={isAuthenticating}
+                        className="w-full flex items-center justify-center gap-3 py-4 px-6 bg-emerald-50 text-emerald-700 border-2 border-emerald-200 rounded-2xl font-bold text-lg hover:bg-emerald-100 transition-all disabled:opacity-50"
+                      >
+                        {isAuthenticating ? (
+                          <div className="w-6 h-6 border-2 border-emerald-700 border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <Fingerprint className="w-6 h-6" />
+                        )}
+                        {isAuthenticating ? 'Authenticating...' : 'Biometric Sign In'}
+                      </button>
+                    </div>
+                  )}
+                </div>
               </motion.div>
             )}
 
@@ -227,17 +208,9 @@ export function Login() {
                         required
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="w-full pl-12 pr-12 py-4 bg-white border border-keydeals-border rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-medium text-keydeals-text-secondary"
+                        className="w-full pl-12 pr-4 py-4 bg-white border border-keydeals-border rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-medium text-keydeals-text-secondary"
                         placeholder="••••••••"
                       />
-                      <button
-                        type="button"
-                        onClick={handleBiometricLogin}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-keydeals-text-secondary/50 hover:text-blue-700 transition-colors"
-                        title="Sign in with Biometrics"
-                      >
-                        <Fingerprint className="w-6 h-6" />
-                      </button>
                     </div>
                   </div>
 

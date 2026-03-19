@@ -20,7 +20,8 @@ import {
   IndianRupee,
   ShieldCheck,
   Users,
-  CheckSquare
+  CheckSquare,
+  Briefcase
 } from 'lucide-react';
 import { useProperties } from '../context/PropertyContext';
 import { Property, PropertyType } from '../types';
@@ -30,6 +31,7 @@ export function AddRentalProperty() {
   const navigate = useNavigate();
   const { addProperty, globalLocation } = useProperties();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [manualArea, setManualArea] = useState(false);
 
   const [formData, setFormData] = useState<Partial<Property>>({
     title: '',
@@ -44,9 +46,15 @@ export function AddRentalProperty() {
     wardrobes: 0,
     furnishing: false,
     floorNumber: 0,
-    frontage: '',
+    frontage: undefined,
     loadingDock: false,
     ceilingHeight: '',
+    dimensionsLength: undefined,
+    dimensionsWidth: undefined,
+    builtUpAreaSqFt: undefined,
+    floorLevel: 'Ground',
+    washroomAvailable: false,
+    pantryAvailable: false,
     amenities: {
       fan: false,
       waterpump: false,
@@ -66,6 +74,16 @@ export function AddRentalProperty() {
     whatsappNumber: '',
     gatedSociety: false
   });
+
+  // Auto-calculate Total Area
+  React.useEffect(() => {
+    if (!manualArea && formData.dimensionsLength && formData.dimensionsWidth) {
+      const calculatedArea = formData.dimensionsLength * formData.dimensionsWidth;
+      if (formData.builtUpAreaSqFt !== calculatedArea) {
+        setFormData(prev => ({ ...prev, builtUpAreaSqFt: calculatedArea }));
+      }
+    }
+  }, [formData.dimensionsLength, formData.dimensionsWidth, manualArea]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,7 +120,12 @@ export function AddRentalProperty() {
 
   const categories: { label: string; value: PropertyType; icon: any }[] = [
     { label: 'House', value: 'Residential House', icon: Home },
+    { label: 'Flat/Apartment', value: 'Flat/Apartment', icon: Building2 },
+    { label: 'P.G', value: 'P.G', icon: Users },
     { label: 'Shop', value: 'Shop', icon: Building2 },
+    { label: 'Commercial space', value: 'Commercial space', icon: Building2 },
+    { label: 'Office space', value: 'Office space', icon: Briefcase },
+    { label: 'Co-working Space', value: 'Co-working Space', icon: Briefcase },
     { label: 'Warehouse', value: 'Warehouse' as any, icon: Warehouse },
     { label: 'Farm Land', value: 'Farm Land', icon: Trees },
   ];
@@ -158,7 +181,7 @@ export function AddRentalProperty() {
             <h2 className="text-xl font-bold text-slate-900">Property Specifics</h2>
           </div>
 
-          {formData.type === 'Residential House' ? (
+          {['Residential House', 'Flat/Apartment'].includes(formData.type as string) && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-2">Bedrooms</label>
@@ -249,17 +272,121 @@ export function AddRentalProperty() {
                 <label htmlFor="furnishing" className="text-sm font-bold text-slate-700">Furnished?</label>
               </div>
             </div>
-          ) : (
+          )}
+
+          {formData.type === 'P.G' && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Bedrooms</label>
+                <div className="flex items-center gap-3">
+                  <Bed className="w-5 h-5 text-slate-400" />
+                  <input 
+                    type="number" 
+                    value={formData.floors?.ground?.bedrooms} 
+                    onChange={e => setFormData({
+                      ...formData, 
+                      floors: { ...formData.floors, ground: { ...formData.floors?.ground!, bedrooms: parseInt(e.target.value) } }
+                    })}
+                    className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500" 
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Washrooms</label>
+                <div className="flex items-center gap-3">
+                  <Bath className="w-5 h-5 text-slate-400" />
+                  <input 
+                    type="number" 
+                    value={formData.floors?.ground?.washrooms} 
+                    onChange={e => setFormData({
+                      ...formData, 
+                      floors: { ...formData.floors, ground: { ...formData.floors?.ground!, washrooms: parseInt(e.target.value) } }
+                    })}
+                    className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500" 
+                  />
+                </div>
+              </div>
+              <div className="flex items-center gap-3 pt-8">
+                <input 
+                  type="checkbox" 
+                  id="furnishing_pg"
+                  checked={formData.furnishing} 
+                  onChange={e => setFormData({ ...formData, furnishing: e.target.checked })}
+                  className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                />
+                <label htmlFor="furnishing_pg" className="text-sm font-bold text-slate-700">Furnished?</label>
+              </div>
+            </div>
+          )}
+
+          {['Shop', 'Commercial space', 'Office space', 'Co-working Space', 'Warehouse', 'Farm Land'].includes(formData.type as string) && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-2">Frontage (ft)</label>
                 <input 
-                  type="text" 
-                  value={formData.frontage} 
-                  onChange={e => setFormData({ ...formData, frontage: e.target.value })}
+                  type="number" 
+                  value={formData.frontage || ''} 
+                  onChange={e => setFormData({ ...formData, frontage: parseInt(e.target.value) || undefined })}
                   className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500" 
-                  placeholder="e.g. 20 ft"
+                  placeholder="e.g. 20"
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Length (ft)</label>
+                <input 
+                  type="number" 
+                  value={formData.dimensionsLength || ''} 
+                  onChange={e => setFormData({ ...formData, dimensionsLength: parseInt(e.target.value) || undefined })}
+                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500" 
+                  placeholder="e.g. 50"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Width (ft)</label>
+                <input 
+                  type="number" 
+                  value={formData.dimensionsWidth || ''} 
+                  onChange={e => setFormData({ ...formData, dimensionsWidth: parseInt(e.target.value) || undefined })}
+                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500" 
+                  placeholder="e.g. 30"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Total Area (sqft)</label>
+                <div className="space-y-2">
+                  <input 
+                    type="number" 
+                    value={formData.builtUpAreaSqFt || ''} 
+                    onChange={e => setFormData({ ...formData, builtUpAreaSqFt: parseInt(e.target.value) || undefined })}
+                    className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500" 
+                    placeholder="e.g. 1500"
+                  />
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="checkbox" 
+                      id="manualArea"
+                      checked={manualArea}
+                      onChange={e => setManualArea(e.target.checked)}
+                      className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <label htmlFor="manualArea" className="text-xs text-slate-500">Manual override</label>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Located on Floor</label>
+                <select 
+                  value={formData.floorLevel} 
+                  onChange={e => setFormData({ ...formData, floorLevel: e.target.value })}
+                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="Basement">Basement</option>
+                  <option value="Ground">Ground</option>
+                  <option value="1st">1st</option>
+                  <option value="2nd">2nd</option>
+                  <option value="3rd">3rd</option>
+                  <option value="4th+">4th+</option>
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-2">Ceiling Height (ft)</label>
@@ -271,15 +398,37 @@ export function AddRentalProperty() {
                   placeholder="e.g. 12 ft"
                 />
               </div>
-              <div className="flex items-center gap-3 pt-8">
-                <input 
-                  type="checkbox" 
-                  id="loadingDock"
-                  checked={formData.loadingDock} 
-                  onChange={e => setFormData({ ...formData, loadingDock: e.target.checked })}
-                  className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
-                />
-                <label htmlFor="loadingDock" className="text-sm font-bold text-slate-700">Loading Dock?</label>
+              <div className="flex items-center gap-6 pt-4">
+                <div className="flex items-center gap-3">
+                  <input 
+                    type="checkbox" 
+                    id="washroomAvailable"
+                    checked={formData.washroomAvailable} 
+                    onChange={e => setFormData({ ...formData, washroomAvailable: e.target.checked })}
+                    className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                  />
+                  <label htmlFor="washroomAvailable" className="text-sm font-bold text-slate-700">Washroom?</label>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input 
+                    type="checkbox" 
+                    id="pantryAvailable"
+                    checked={formData.pantryAvailable} 
+                    onChange={e => setFormData({ ...formData, pantryAvailable: e.target.checked })}
+                    className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                  />
+                  <label htmlFor="pantryAvailable" className="text-sm font-bold text-slate-700">Pantry?</label>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input 
+                    type="checkbox" 
+                    id="loadingDock"
+                    checked={formData.loadingDock} 
+                    onChange={e => setFormData({ ...formData, loadingDock: e.target.checked })}
+                    className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                  />
+                  <label htmlFor="loadingDock" className="text-sm font-bold text-slate-700">Loading Dock?</label>
+                </div>
               </div>
             </div>
           )}

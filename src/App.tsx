@@ -26,6 +26,7 @@ import { Ads } from './pages/Ads';
 import { Rentals } from './pages/Rentals';
 import { Market } from './pages/Market';
 import { Analytics } from './pages/Analytics';
+import { Terms } from './pages/Terms';
 import { AddRentalProperty } from './pages/AddRentalProperty';
 import { RentalRequirements } from './pages/RentalRequirements';
 import { PropertyProvider, useProperties } from './context/PropertyContext';
@@ -90,6 +91,7 @@ function AppRoutes() {
       <Route path="/rentals" element={<ProtectedRoute><Rentals /></ProtectedRoute>} />
       <Route path="/market" element={<ProtectedRoute><Market /></ProtectedRoute>} />
       <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+      <Route path="/terms" element={<ProtectedRoute><Terms /></ProtectedRoute>} />
       <Route path="/rentals/add" element={<ProtectedRoute><AddRentalProperty /></ProtectedRoute>} />
       <Route path="/rentals/search" element={<ProtectedRoute><RentalRequirements /></ProtectedRoute>} />
       <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
