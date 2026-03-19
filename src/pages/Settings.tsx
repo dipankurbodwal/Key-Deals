@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useProperties } from '../context/PropertyContext';
 import { Link } from 'react-router-dom';
-import { Save, Building2, User, Phone, Mail, FileText, Settings as SettingsIcon, Globe, Moon, Sun, Fingerprint, Store, Share2, MessageCircle, Calculator, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Save, Building2, User, Phone, Mail, FileText, Settings as SettingsIcon, Globe, Moon, Sun, Fingerprint, Store, Share2, MessageCircle, Calculator, ArrowRight, CheckCircle2, LogOut } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '../lib/utils';
 import { supabase } from '../lib/supabase';
@@ -62,6 +62,16 @@ export function Settings() {
 
     fetchProfile();
   }, [user?.id]);
+
+  const handleSignOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      // The onAuthStateChange listener in PropertyContext will handle state cleanup
+    } catch (error: any) {
+      console.error('Error signing out:', error.message);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -400,6 +410,15 @@ export function Settings() {
             <div className="p-6">
               <FeedbackForm />
             </div>
+          </div>
+          <div className="mt-8 pt-8 border-t border-gray-100">
+            <button
+              onClick={handleSignOut}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 text-red-600 font-medium bg-red-50 rounded-xl hover:bg-red-100 transition-colors"
+            >
+              <LogOut className="w-5 h-5" />
+              {t('settings.signOut', 'Sign Out')}
+            </button>
           </div>
         </div>
       </div>

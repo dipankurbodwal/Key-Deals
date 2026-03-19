@@ -132,6 +132,14 @@ export function Onboarding() {
     try {
       if (!selectedRole) return;
 
+      // Ensure user is actually logged in to Supabase
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) {
+        setError('Your session has expired. Please log in again.');
+        navigate('/login');
+        return;
+      }
+
       const updatedUser: User = {
         ...(user || { id: 'u-' + Date.now(), name: '', email: '', phone: '', isAdmin: false, isSubscribed: false, referralCount: 0, referralEarnedCount: 0 }),
         role: selectedRole,

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Property, PropertyStatus, Lead, CompanySettings, User, Feedback, SubscriptionPayment, AdminSettings, Advertisement } from '../types';
+import { Property, PropertyStatus, Lead, CompanySettings, User, Feedback, SubscriptionPayment, AdminSettings, Advertisement, UserRole } from '../types';
 import { supabase } from '../lib/supabase';
 import { MOCK_LEADS } from '../data';
 
@@ -148,6 +148,10 @@ export function PropertyProvider({ children }: { children: React.ReactNode }) {
     }
   ]);
   const [referralReward, setReferralReward] = useState(false);
+  const [user, setUser] = useState<User | null>(() => {
+    const saved = localStorage.getItem('keydeals_user');
+    return saved ? JSON.parse(saved) : null;
+  });
   const [globalLocation, setGlobalLocation] = useState(() => {
     return localStorage.getItem('keydeals_global_location') || 'All India';
   });
@@ -223,11 +227,112 @@ export function PropertyProvider({ children }: { children: React.ReactNode }) {
     setAdvertisements(mockAds);
   }, []);
   
-  // Mock user for now. In a real app, this would come from Auth.
-  const [user, setUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('keydeals_user');
-    return saved ? JSON.parse(saved) : null;
-  });
+  // Sync user with Supabase Auth
+  useEffect(() => {
+    if (!supabase) return;
+
+    // Check active session on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        // If we have a session but no user state, or different user, update it
+        // We might need to fetch the profile from 'profiles' table too
+        const fetchProfile = async () => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (profile) {
+            setUser({
+              id: session.user.id,
+              email: session.user.email || '',
+              name: profile.full_name || '',
+              phone: profile.phone_number || '',
+              role: profile.role as UserRole,
+              onboardingCompleted: profile.onboarding_completed,
+              isAdmin: profile.is_admin || false,
+              isSubscribed: profile.is_subscribed || false,
+              subscriptionStatus: profile.subscription_status || 'inactive',
+              subscriptionExpiry: profile.subscription_expiry,
+              referralCount: profile.referral_count || 0,
+              referralEarnedCount: profile.referral_earned_count || 0,
+              businessProfile: profile.business_profile,
+              clientRequirements: profile.client_requirements,
+              ownerProfile: profile.owner_profile,
+              city: profile.city,
+              address: profile.address
+            });
+          } else {
+            // No profile yet, but we have auth user
+            setUser({
+              id: session.user.id,
+              email: session.user.email || '',
+              name: session.user.user_metadata?.full_name || '',
+              phone: session.user.user_metadata?.phone || '',
+              isAdmin: false,
+              isSubscribed: false,
+              referralCount: 0,
+              referralEarnedCount: 0,
+              onboardingCompleted: false
+            });
+          }
+        };
+        fetchProfile();
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profile) {
+          setUser({
+            id: session.user.id,
+            email: session.user.email || '',
+            name: profile.full_name || '',
+            phone: profile.phone_number || '',
+            role: profile.role as UserRole,
+            onboardingCompleted: profile.onboarding_completed,
+            isAdmin: profile.is_admin || false,
+            isSubscribed: profile.is_subscribed || false,
+            subscriptionStatus: profile.subscription_status || 'inactive',
+            subscriptionExpiry: profile.subscription_expiry,
+            referralCount: profile.referral_count || 0,
+            referralEarnedCount: profile.referral_earned_count || 0,
+            businessProfile: profile.business_profile,
+            clientRequirements: profile.client_requirements,
+            ownerProfile: profile.owner_profile,
+            city: profile.city,
+            address: profile.address
+          });
+        } else {
+          setUser({
+            id: session.user.id,
+            email: session.user.email || '',
+            name: session.user.user_metadata?.full_name || '',
+            phone: session.user.user_metadata?.phone || '',
+            isAdmin: false,
+            isSubscribed: false,
+            referralCount: 0,
+            referralEarnedCount: 0,
+            onboardingCompleted: false
+          });
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        localStorage.removeItem('keydeals_user');
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     if (user) {

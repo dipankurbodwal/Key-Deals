@@ -3,13 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Key, Fingerprint, Mail, Lock, ArrowRight, UserPlus, LogIn, ShieldCheck, AlertCircle } from 'lucide-react';
 import { useProperties } from '../context/PropertyContext';
 import { motion, AnimatePresence } from 'motion/react';
+import { supabase } from '../lib/supabase';
 
 type AuthView = 'landing' | 'signin' | 'signup';
-
-const MOCK_DB = [
-  { email: 'agent@keydeals.com', password: 'password123', name: 'Agent' },
-  { email: '7keydeals@gmail.com', password: 'admin', name: 'Admin' }
-];
 
 export function Login() {
   const navigate = useNavigate();
@@ -21,82 +17,66 @@ export function Login() {
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
 
-  useEffect(() => {
-    // View changed
-  }, [view]);
+  const handleBiometricLogin = () => {
+    setError('Biometric login is not yet implemented with Supabase.');
+  };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setIsAuthenticating(true);
     
-    const userMatch = MOCK_DB.find(u => u.email === email && u.password === password);
-    
-    if (userMatch) {
-      setUser({
-        id: Math.random().toString(36).substr(2, 9),
-        email: userMatch.email,
-        name: userMatch.name,
-        phone: '+1234567890',
-        isAdmin: userMatch.email === '7keydeals@gmail.com',
-        isSubscribed: true,
-        onboardingCompleted: true,
-        referralCount: 0,
-        referralEarnedCount: 0
+    try {
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
-      navigate('/');
-    } else {
-      const emailExists = MOCK_DB.some(u => u.email === email);
-      if (!emailExists) {
-        setError('Account not found. Would you like to Create an Account instead?');
-      } else {
-        setError('Invalid password. Please try again.');
+
+      if (authError) throw authError;
+
+      if (data.user) {
+        // User state will be updated by onAuthStateChange in PropertyContext
+        navigate('/');
       }
+    } catch (err: any) {
+      setError(err.message || 'Invalid login credentials');
+    } finally {
+      setIsAuthenticating(false);
     }
   };
 
-  const handleBiometricLogin = () => {
-    setIsAuthenticating(true);
-    // Simulate biometric auth
-    setTimeout(() => {
-      setUser({
-        id: 'u1',
-        email: 'agent@keydeals.com',
-        name: 'Agent',
-        phone: '+1234567890',
-        isAdmin: false,
-        isSubscribed: true,
-        onboardingCompleted: true,
-        referralCount: 0,
-        referralEarnedCount: 0
-      });
-      setIsAuthenticating(false);
-      navigate('/');
-    }, 1500);
-  };
-
-  const handleSignUp = (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setIsAuthenticating(true);
 
     if (password !== confirmPassword) {
       setError('Passwords do not match.');
+      setIsAuthenticating(false);
       return;
     }
 
-    // Mock sign up
-    setUser({
-      id: Math.random().toString(36).substr(2, 9),
-      email,
-      name: email.split('@')[0],
-      phone: '',
-      isAdmin: false,
-      isSubscribed: false,
-      subscriptionStatus: 'inactive',
-      onboardingCompleted: false,
-      referralCount: 0,
-      referralEarnedCount: 0
-    });
-    navigate('/onboarding');
+    try {
+      const { data, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: email.split('@')[0],
+          }
+        }
+      });
+
+      if (authError) throw authError;
+
+      if (data.user) {
+        navigate('/onboarding');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Error creating account');
+    } finally {
+      setIsAuthenticating(false);
+    }
   };
 
   return (
