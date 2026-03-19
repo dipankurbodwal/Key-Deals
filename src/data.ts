@@ -1,0 +1,150 @@
+import { addMinutes } from 'date-fns';
+import { Property, Lead } from './types';
+
+const now = new Date();
+
+export const MOCK_PROPERTIES: Property[] = [
+  {
+    id: 'prop-1',
+    title: 'Luxury Oceanview Villa',
+    type: 'Residential House',
+    purpose: 'Sale',
+    description: 'A stunning 5-bedroom villa with panoramic ocean views, private infinity pool, and modern amenities.',
+    remarks: 'Ready to move in, excellent condition.',
+    price: '3.5 Crore',
+    city: 'Rohtak',
+    location: '123 Coastal Highway, Malibu, CA',
+    landmark: 'Near Zuma Beach',
+    geopoint: { lat: 34.0259, lng: -118.7798 },
+    facing: 'South-West',
+    cornerSideFront: 'Ocean Drive',
+    cornerSideSide: 'Palm Lane',
+    openSides: 3,
+    plotAreaSqYd: 1200,
+    plotAreaSqMtr: 1200 * 0.836127,
+    dimensionsLength: 120,
+    dimensionsWidth: 90,
+    builtUpAreaSqFt: 5500,
+    floors: {
+      ground: { bedrooms: 2, washrooms: 2, livingRooms: 1, kitchens: 1 },
+      first: { bedrooms: 2, washrooms: 2, livingRooms: 1, kitchens: 0 },
+      second: { bedrooms: 1, washrooms: 1, livingRooms: 0, kitchens: 0 },
+    },
+    carParking: true,
+    bikeParking: true,
+    roadType: 'Paved',
+    roadWidth: 40,
+    gatedSociety: true,
+    status: 'Available',
+    images: [
+      'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&q=80',
+      'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
+      'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80'
+    ],
+    ownerName: 'Eleanor Vance',
+    phoneNumber: '+15550198273',
+    whatsappNumber: '15550198273',
+    visitTime: addMinutes(now, 65).toISOString(), // 1 hour 5 mins from now
+  },
+  {
+    id: 'prop-2',
+    title: 'Modern Downtown Penthouse',
+    type: 'Flat/Apartment',
+    purpose: 'Rent',
+    description: 'Sleek 3-bedroom penthouse in the heart of the city. Features floor-to-ceiling windows and a private terrace.',
+    remarks: 'High rental yield potential.',
+    price: '2.1 Lacs/month',
+    city: 'Gurgaon',
+    location: '450 Skyline Blvd, Apt 4201, New York, NY',
+    landmark: 'Opposite Central Park',
+    geopoint: { lat: 40.7644, lng: -73.9730 },
+    facing: 'East',
+    openSides: 2,
+    plotAreaSqYd: 0,
+    plotAreaSqMtr: 0,
+    builtUpAreaSqFt: 2800,
+    floors: {
+      ground: { bedrooms: 3, washrooms: 3, livingRooms: 1, kitchens: 1 },
+    },
+    carParking: true,
+    bikeParking: false,
+    roadType: 'Main Road',
+    roadWidth: 60,
+    gatedSociety: true,
+    status: 'Available',
+    images: [
+      'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80',
+      'https://images.unsplash.com/photo-1502672260266-1c1e52b1f4c7?w=800&q=80'
+    ],
+    ownerName: 'Arthur Pendelton',
+    phoneNumber: '+15550123456',
+    whatsappNumber: '15550123456',
+    visitTime: addMinutes(now, 120).toISOString(),
+  },
+  {
+    id: 'prop-3',
+    title: 'Cozy Suburban Retreat',
+    type: 'Residential House',
+    purpose: 'Sale',
+    description: 'Charming 4-bedroom family home with a large backyard, newly renovated kitchen, and close to top-rated schools.',
+    remarks: 'Needs minor paint job.',
+    price: '85 Lacs',
+    city: 'Rohtak',
+    location: '78 Maple Street, Austin, TX',
+    landmark: 'Next to Oakwood Elementary',
+    geopoint: { lat: 30.2672, lng: -97.7431 },
+    facing: 'North',
+    openSides: 1,
+    plotAreaSqYd: 600,
+    plotAreaSqMtr: 600 * 0.836127,
+    builtUpAreaSqFt: 2200,
+    floors: {
+      ground: { bedrooms: 1, washrooms: 1, livingRooms: 1, kitchens: 1 },
+      first: { bedrooms: 3, washrooms: 2, livingRooms: 1, kitchens: 0 },
+    },
+    carParking: false,
+    bikeParking: true,
+    roadType: 'Paved',
+    roadWidth: 30,
+    gatedSociety: false,
+    status: 'Sold',
+    images: [
+      'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=800&q=80',
+      'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&q=80'
+    ],
+    ownerName: 'Sarah Jenkins',
+    phoneNumber: '+15550187654',
+    whatsappNumber: '15550187654',
+  }
+];
+
+export const MOCK_LEADS: Lead[] = [
+  {
+    id: 'lead-1',
+    name: 'Michael Chang',
+    phone: '+15550100100',
+    whatsapp: '15550100100',
+    interestedIn: 'prop-1',
+    notes: 'Looking for a vacation home. Very interested in the ocean view.',
+    status: 'Contacted',
+    profession: 'Software Engineer',
+    purpose: 'Purchase',
+    budgetMin: '3 Crore',
+    budgetMax: '4 Crore',
+    source: 'Direct'
+  },
+  {
+    id: 'lead-2',
+    name: 'Jessica Alba',
+    phone: '+15550199299',
+    whatsapp: '15550199299',
+    interestedIn: 'prop-2',
+    notes: 'Needs to move in by next month.',
+    status: 'Qualified',
+    profession: 'Designer',
+    purpose: 'Rent',
+    budgetMin: '1.5 Lacs',
+    budgetMax: '2.5 Lacs',
+    source: 'Broker'
+  }
+];

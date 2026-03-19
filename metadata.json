@@ -1,0 +1,7 @@
+{
+  "name": "Key Deals",
+  "description": "The official real estate CRM and property management dashboard for Key Deals, featuring lead tracking, scheduling, and communication tools.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}

@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+@theme {
+  --color-keydeals-surface: #A1BCDF;
+  --color-keydeals-bg: #F0F4F8;
+  --color-keydeals-border: #8DA9CC;
+  --color-keydeals-text-primary: #1E3A8A;
+  --color-keydeals-text-secondary: #1A1A1A;
+  --color-keydeals-action: #1D4ED8;
+}
