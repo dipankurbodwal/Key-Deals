@@ -27,6 +27,7 @@ export function Settings() {
   const [isSaving, setIsSaving] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -37,13 +38,9 @@ export function Settings() {
           .from('profiles')
           .select('company_name, full_name, phone_number')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
-        if (error) {
-          if (error.code !== 'PGRST116') { // Ignore "no rows found" error
-            console.error('Error fetching profile:', error);
-          }
-        } else if (data) {
+        if (data) {
           const updatedSettings = {
             ...settings,
             companyName: data.company_name || '',
@@ -78,9 +75,10 @@ export function Settings() {
     if (!user?.id) return;
 
     setIsSaving(true);
+    setError(null);
     
     try {
-      const { error } = await supabase
+      const { error: supabaseError } = await supabase
         .from('profiles')
         .upsert({
           id: user.id,
@@ -90,14 +88,14 @@ export function Settings() {
           updated_at: new Date().toISOString()
         });
 
-      if (error) throw error;
+      if (supabaseError) throw supabaseError;
 
       updateSettings(formData);
       setShowToast(true);
       setTimeout(() => setShowToast(false), 3000);
-    } catch (error) {
-      console.error('Error saving profile:', error);
-      alert('Failed to update profile. Please try again.');
+    } catch (err: any) {
+      console.error('Error saving profile:', err);
+      setError(err.message || 'Failed to update profile. Please try again.');
     } finally {
       setIsSaving(false);
     }
@@ -387,6 +385,13 @@ export function Settings() {
                 </div>
               </div>
             </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="p-4 bg-red-50 text-red-600 rounded-xl text-sm font-medium border border-red-100 mb-4">
+                {error}
+              </div>
+            )}
 
             {/* Floating Save Button */}
             <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-keydeals-border md:static md:bg-transparent md:border-t-0 md:p-0 z-40 flex justify-center">

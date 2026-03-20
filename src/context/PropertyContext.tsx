@@ -241,7 +241,7 @@ export function PropertyProvider({ children }: { children: React.ReactNode }) {
             .from('profiles')
             .select('*')
             .eq('id', session.user.id)
-            .single();
+            .maybeSingle();
           
           if (profile) {
             setUser({
@@ -288,7 +288,7 @@ export function PropertyProvider({ children }: { children: React.ReactNode }) {
           .from('profiles')
           .select('*')
           .eq('id', session.user.id)
-          .single();
+          .maybeSingle();
 
         if (profile) {
           setUser({
