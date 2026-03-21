@@ -24,13 +24,13 @@ export function Brokers() {
           {filteredBrokers.map((broker) => (
             <div key={broker.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all p-6 space-y-4">
               <div className="flex items-start justify-between">
-                <div className="p-3 bg-blue-50 rounded-xl">
-                  <Building2 className="w-6 h-6 text-blue-600" />
+                <div className="p-3 bg-[#002366]/5 rounded-xl">
+                  <Building2 className="w-6 h-6 text-[#002366]" />
                 </div>
                 <div className="flex gap-2">
                   <a 
                     href={`tel:${broker.businessProfile?.contactNumber || broker.phone}`}
-                    className="p-2 bg-slate-100 text-slate-600 rounded-full hover:bg-blue-600 hover:text-white transition-all"
+                    className="p-2 bg-slate-100 text-slate-600 rounded-full hover:bg-[#002366] hover:text-white transition-all"
                   >
                     <Phone className="w-4 h-4" />
                   </a>
@@ -63,7 +63,7 @@ export function Brokers() {
               <div className="grid grid-cols-2 gap-3 pt-2">
                 <a 
                   href={`tel:${broker.businessProfile?.contactNumber || broker.phone}`}
-                  className="flex items-center justify-center gap-2 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors"
+                  className="flex items-center justify-center gap-2 py-2.5 bg-[#002366] text-white rounded-xl text-sm font-bold hover:bg-[#002366]/90 transition-colors"
                 >
                   <Phone className="w-4 h-4" /> Call
                 </a>
@@ -90,7 +90,7 @@ export function Brokers() {
           </div>
           <button 
             onClick={() => window.location.href = '/onboarding'}
-            className="px-8 py-3 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
+            className="px-8 py-3 bg-[#002366] text-white rounded-2xl font-bold hover:bg-[#002366]/90 transition-all shadow-lg shadow-[#002366]/20"
           >
             Register as Broker
           </button>

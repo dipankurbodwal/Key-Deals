@@ -37,16 +37,16 @@ export function Admin() {
   }
 
   const filteredUsers = MOCK_USERS_LIST.filter(u => 
-    u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.phone.includes(searchTerm)
+    u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.phone?.includes(searchTerm)
   );
 
   // Metrics
   const totalUsers = MOCK_USERS_LIST.length;
   const activeSubscribers = MOCK_USERS_LIST.filter(u => u.subscriptionStatus === 'active').length;
   const totalProperties = properties.length;
-  const marketplaceListings = properties.filter(p => p.isPublic).length;
+  const marketplaceListings = properties.filter(p => p.is_published).length;
 
   // City Analytics
   const cityStats = useMemo(() => {
@@ -289,7 +289,7 @@ export function Admin() {
                       <td className="p-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 flex items-center justify-center font-bold">
-                            {u.name[0]}
+                            {u.name?.[0] || 'U'}
                           </div>
                           <div>
                             <p className="font-bold text-slate-900 dark:text-white">{u.name}</p>
@@ -494,7 +494,7 @@ export function Admin() {
             
             <div className="flex flex-col items-center text-center space-y-4 mb-6">
               <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full flex items-center justify-center font-bold text-3xl">
-                {selectedUser.name[0]}
+                {selectedUser.name?.[0] || 'U'}
               </div>
               <div>
                 <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{selectedUser.name}</h3>

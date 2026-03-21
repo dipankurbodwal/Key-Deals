@@ -31,16 +31,29 @@ import { AddRentalProperty } from './pages/AddRentalProperty';
 import { RentalRequirements } from './pages/RentalRequirements';
 import { PropertyProvider, useProperties } from './context/PropertyContext';
 import { APIProvider } from '@vis.gl/react-google-maps';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || process.env.GOOGLE_MAPS_PLATFORM_KEY || '';
 const hasValidMapsKey = Boolean(GOOGLE_MAPS_API_KEY) && GOOGLE_MAPS_API_KEY !== 'YOUR_API_KEY';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user } = useProperties();
+  const { user, isAuthReady } = useProperties();
   const location = useLocation();
+
+  if (!isAuthReady) {
+    return (
+      <div className="min-h-screen bg-keydeals-bg flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#002366]"></div>
+      </div>
+    );
+  }
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (!!user.onboardingCompleted && location.pathname === '/onboarding') {
+    return <Navigate to="/" replace />;
   }
 
   if (!user.onboardingCompleted && location.pathname !== '/onboarding') {
@@ -103,12 +116,14 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <PropertyProvider>
-      <APIProvider apiKey={GOOGLE_MAPS_API_KEY} version="weekly">
-        <Router>
-          <AppRoutes />
-        </Router>
-      </APIProvider>
-    </PropertyProvider>
+    <ErrorBoundary>
+      <PropertyProvider>
+        <APIProvider apiKey={GOOGLE_MAPS_API_KEY} version="weekly">
+          <Router>
+            <AppRoutes />
+          </Router>
+        </APIProvider>
+      </PropertyProvider>
+    </ErrorBoundary>
   );
 }

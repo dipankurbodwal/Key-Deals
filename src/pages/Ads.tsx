@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
-import { Megaphone, Plus, MapPin, Building2, Phone, MessageSquare, Search, X, CreditCard } from 'lucide-react';
+import { Megaphone, Plus, MapPin, Building2, Phone, MessageSquare, Search, X, CreditCard, Navigation } from 'lucide-react';
 import { useProperties } from '../context/PropertyContext';
 import { cn } from '../lib/utils';
 import { Advertisement } from '../types';
+import { APIProvider } from '@vis.gl/react-google-maps';
+import { LocationPicker } from '../components/LocationPicker';
+
+const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || process.env.GOOGLE_MAPS_PLATFORM_KEY || '';
+const hasValidKey = Boolean(API_KEY) && API_KEY !== 'YOUR_API_KEY';
 
 export function Ads() {
   const { advertisements, globalLocation, addAdvertisement, user } = useProperties();
@@ -18,9 +23,11 @@ export function Ads() {
     developerName: '',
     description: '',
     city: globalLocation === 'All India' ? '' : globalLocation,
+    address: '',
     priceRange: '',
     contactNumber: '',
     whatsappNumber: '',
+    geopoint: undefined,
   });
 
   const handlePostAd = async (e: React.FormEvent) => {
@@ -36,6 +43,8 @@ export function Ads() {
       developerName: newAd.developerName!,
       description: newAd.description!,
       city: newAd.city!,
+      address: newAd.address,
+      geopoint: newAd.geopoint,
       image: 'https://picsum.photos/seed/' + Date.now() + '/800/600',
       priceRange: newAd.priceRange!,
       contactNumber: newAd.contactNumber!,
@@ -44,7 +53,7 @@ export function Ads() {
       isPaid: true,
     };
     
-    addAdvertisement(ad);
+    await addAdvertisement(ad);
     setIsProcessing(false);
     setShowPostModal(false);
     alert('Ad posted successfully! Subscription of ₹1000 for 1 month has been activated.');
@@ -186,6 +195,30 @@ export function Ads() {
                       <input required type="text" value={newAd.priceRange} onChange={e => setNewAd({...newAd, priceRange: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500" placeholder="e.g. 50 Lacs - 1 Cr" />
                     </div>
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Project Address</label>
+                    <input required type="text" value={newAd.address} onChange={e => setNewAd({...newAd, address: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500" placeholder="Full project address" />
+                  </div>
+
+                  <div className="pt-2 space-y-4">
+                    <label className="block text-sm font-bold text-slate-700 mb-2">GPS Coordinates & Map Picker</label>
+                    
+                    {hasValidKey ? (
+                      <APIProvider apiKey={API_KEY} version="weekly">
+                        <LocationPicker 
+                          value={newAd.geopoint || null} 
+                          onChange={(point) => setNewAd({ ...newAd, geopoint: point })}
+                          onAddressChange={(address) => setNewAd({ ...newAd, address: address })}
+                        />
+                      </APIProvider>
+                    ) : (
+                      <div className="p-6 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50 text-center">
+                        <p className="text-slate-500 font-medium">Google Maps API Key required for Geo-Capture System.</p>
+                        <p className="text-xs text-slate-400 mt-1">Please add GOOGLE_MAPS_PLATFORM_KEY in Settings &gt; Secrets.</p>
+                      </div>
+                    )}
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
                     <textarea required value={newAd.description} onChange={e => setNewAd({...newAd, description: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 h-24" placeholder="Brief details about the project..." />

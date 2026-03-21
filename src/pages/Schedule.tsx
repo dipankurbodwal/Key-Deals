@@ -28,7 +28,7 @@ export function Schedule() {
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-slate-200 bg-slate-50/50">
           <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-blue-500" /> Upcoming 7 Days
+            <Calendar className="w-5 h-5 text-[#002366]" /> Upcoming 7 Days
           </h2>
         </div>
 
@@ -41,7 +41,7 @@ export function Schedule() {
               <div key={property.id} className="p-6 hover:bg-slate-50 transition-colors flex flex-col md:flex-row gap-6">
                 {/* Time Column */}
                 <div className="md:w-48 flex flex-col items-start md:items-end md:pr-6 md:border-r border-slate-200">
-                  <div className="bg-blue-50 text-blue-900 px-4 py-2 rounded-xl font-bold text-lg border border-blue-100 shadow-sm">
+                  <div className="bg-[#002366]/5 text-[#002366] px-4 py-2 rounded-xl font-bold text-lg border border-[#002366]/10 shadow-sm">
                     {format(visitDate, 'MMM d')}
                   </div>
                   <div className="flex items-center gap-1.5 mt-3 text-slate-600 font-medium">
@@ -52,7 +52,7 @@ export function Schedule() {
                 {/* Details Column */}
                 <div className="flex-1 space-y-4">
                   <div>
-                    <Link to={`/property/${property.id}`} className="text-xl font-bold text-slate-900 hover:text-blue-600 transition-colors line-clamp-1">
+                    <Link to={`/property/${property.id}`} className="text-xl font-bold text-slate-900 hover:text-[#002366] transition-colors line-clamp-1">
                       {property.title}
                     </Link>
                     <div className="flex items-center gap-2 text-slate-500 mt-1 text-sm">

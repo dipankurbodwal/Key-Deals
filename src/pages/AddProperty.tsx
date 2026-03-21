@@ -1,11 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link, useParams } from 'react-router-dom';
-import { ArrowLeft, MapPin, Upload, X, Camera, Navigation, Info, Home, Construction, DollarSign, Settings, Image as ImageIcon, MessageSquare, User, FileText, Scale, Map as MapIcon, CalendarClock, CheckSquare } from 'lucide-react';
+import { ArrowLeft, MapPin, Upload, X, Camera, Navigation, Info, Home, Construction, DollarSign, Settings, Image as ImageIcon, MessageSquare, User, FileText, Scale, Map as MapIcon } from 'lucide-react';
 import { useProperties } from '../context/PropertyContext';
 import { Property, GeoPoint, PropertyType, FacingType, RoadType, FloorDetails, DocStatus, QuotedBy, PropertyStatus, Purpose } from '../types';
 import { cn } from '../lib/utils';
+import { APIProvider } from '@vis.gl/react-google-maps';
+import { LocationPicker } from '../components/LocationPicker';
 
-const PROPERTY_TYPES: PropertyType[] = ['Residential Plot', 'Residential House', 'Commercial space', 'Shop', 'Office space', 'Farm House', 'Farm Land', 'Flat/Apartment', 'P.G', 'Co-working Space'];
+const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || process.env.GOOGLE_MAPS_PLATFORM_KEY || '';
+const hasValidKey = Boolean(API_KEY) && API_KEY !== 'YOUR_API_KEY';
+
+const PROPERTY_TYPES: PropertyType[] = ['Residential Plot', 'Residential House', 'Commercial space', 'Shop', 'Office space', 'Farm House', 'Farm Land', 'Flat/Apartment'];
 const FACING_TYPES: FacingType[] = ['East', 'West', 'South', 'North', 'South-East', 'South-West', 'North-East', 'North-West'];
 const ROAD_TYPES: RoadType[] = ['Paved', 'Kacha', 'Main Road'];
 const DOC_STATUSES: DocStatus[] = ['Original', 'Photocopy', 'None'];
@@ -15,7 +20,7 @@ const DEFAULT_FLOOR: FloorDetails = { bedrooms: 0, washrooms: 0, livingRooms: 0,
 export function AddProperty() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { properties, addProperty, updateProperty, settings } = useProperties();
+  const { properties, addProperty, updateProperty, settings, user } = useProperties();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isEditing = !!id;
@@ -25,8 +30,6 @@ export function AddProperty() {
     phoneNumber: '',
     whatsappNumber: '',
     addedAt: new Date().toISOString().slice(0, 16),
-    visitTime: '',
-    visitedBy: '',
     type: 'Residential House',
     purpose: 'Sale',
     location: '',
@@ -100,8 +103,6 @@ export function AddProperty() {
         setFormData({
           ...propertyToEdit,
           addedAt: propertyToEdit.addedAt ? propertyToEdit.addedAt.slice(0, 16) : '',
-          visitTime: propertyToEdit.visitTime ? propertyToEdit.visitTime.slice(0, 16) : '',
-          secondVisitTime: propertyToEdit.secondVisitTime ? propertyToEdit.secondVisitTime.slice(0, 16) : '',
         });
       }
     }
@@ -112,35 +113,6 @@ export function AddProperty() {
   };
 
   const plotAreaSqMtr = typeof formData.plotAreaSqYd === 'number' ? (formData.plotAreaSqYd * 0.836127).toFixed(2) : '';
-
-  const handleCaptureLocation = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsLocating(true);
-    setLocationError('');
-    
-    if (!navigator.geolocation) {
-      setLocationError('Geolocation is not supported by your browser');
-      setIsLocating(false);
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        updateFormData({
-          geopoint: {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          }
-        });
-        setIsLocating(false);
-      },
-      (error) => {
-        setLocationError('Unable to retrieve your location. Please check permissions.');
-        setIsLocating(false);
-      },
-      { enableHighAccuracy: true }
-    );
-  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -166,16 +138,21 @@ export function AddProperty() {
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent, statusOverride?: PropertyStatus) => {
+    if (e) e.preventDefault();
     
+    const finalStatus = statusOverride || formData.status || 'Available';
+
     if (!formData.geopoint) {
       alert('Please capture the property location.');
       return;
     }
 
+    const isOwner = user?.role === 'Owner' || user?.role === 'Property Owner';
+
     const propertyData: Property = {
       ...formData,
+      status: finalStatus,
       id: isEditing && id ? id : `prop-${Date.now()}`,
       title: formData.title || `${formData.type} at ${formData.landmark || formData.location}`,
       plotAreaSqMtr: Number(plotAreaSqMtr) || undefined,
@@ -183,8 +160,8 @@ export function AddProperty() {
         ? formData.images 
         : ['https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&q=80'],
       addedAt: formData.addedAt ? new Date(formData.addedAt).toISOString() : undefined,
-      visitTime: formData.visitTime ? new Date(formData.visitTime).toISOString() : undefined,
-      secondVisitTime: formData.secondVisitTime ? new Date(formData.secondVisitTime).toISOString() : undefined,
+      is_published: isOwner ? true : formData.is_published,
+      user_id: user?.id,
     } as Property;
 
     if (isEditing) {
@@ -211,14 +188,33 @@ export function AddProperty() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-12">
-      <div className="flex items-center gap-4 mb-6">
-        <Link to="/" className="p-2 bg-white border border-keydeals-border rounded-full hover:bg-keydeals-bg transition-colors shadow-sm">
-          <ArrowLeft className="w-5 h-5 text-keydeals-text-secondary" />
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold text-keydeals-text-primary tracking-tight">{isEditing ? 'Edit Property' : 'Add New Property'}</h1>
-          <p className="text-keydeals-text-secondary mt-1 font-medium">{isEditing ? 'Update the details of the property listing.' : 'Enter the comprehensive details of the new property listing.'}</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+        <div className="flex items-center gap-4">
+          <Link to="/" className="p-2 bg-white border border-keydeals-border rounded-full hover:bg-keydeals-bg transition-colors shadow-sm">
+            <ArrowLeft className="w-5 h-5 text-keydeals-text-secondary" />
+          </Link>
+          <div>
+            <h1 className="text-3xl font-bold text-keydeals-text-primary tracking-tight">{isEditing ? 'Edit Property' : 'Add New Property'}</h1>
+            <p className="text-keydeals-text-secondary mt-1 font-medium">{isEditing ? 'Update the details of the property listing.' : 'Enter the comprehensive details of the new property listing.'}</p>
+          </div>
         </div>
+
+        {!isEditing && (
+          <div className="flex bg-keydeals-surface p-1 rounded-2xl border border-keydeals-border shadow-sm">
+            <Link 
+              to="/add-property" 
+              className="px-6 py-2.5 rounded-xl font-bold transition-all bg-[#002366] text-white shadow-md"
+            >
+              Sale your property
+            </Link>
+            <Link 
+              to="/rentals/add" 
+              className="px-6 py-2.5 rounded-xl font-bold transition-all text-keydeals-text-secondary hover:bg-white/50"
+            >
+              Rent your property
+            </Link>
+          </div>
+        )}
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">
@@ -246,34 +242,12 @@ export function AddProperty() {
           </div>
         </section>
 
-        {/* 2. Visit Details */}
-        <section className="bg-keydeals-surface p-6 rounded-2xl border border-keydeals-border shadow-sm space-y-4">
-          <h2 className="text-xl font-bold text-keydeals-text-primary mb-4 flex items-center gap-2">
-            <CalendarClock className="w-5 h-5 text-keydeals-text-secondary/50" /> Visit Details
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-bold text-keydeals-text-primary mb-1">Date & Time Added</label>
-              <input type="datetime-local" value={formData.addedAt} onChange={e => updateFormData({ addedAt: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-keydeals-border bg-white text-keydeals-text-secondary focus:ring-2 focus:ring-keydeals-action transition-all" />
-            </div>
-            <div>
-              <label className="block text-sm font-bold text-keydeals-text-primary mb-1">Visit Time</label>
-              <input type="datetime-local" value={formData.visitTime} onChange={e => updateFormData({ visitTime: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-keydeals-border bg-white text-keydeals-text-secondary focus:ring-2 focus:ring-keydeals-action transition-all" />
-            </div>
-            <div>
-              <label className="block text-sm font-bold text-keydeals-text-primary mb-1">Visited By</label>
-              <input type="text" value={formData.visitedBy} onChange={e => updateFormData({ visitedBy: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-keydeals-border bg-white text-keydeals-text-secondary focus:ring-2 focus:ring-keydeals-action transition-all" placeholder="Agent Name" />
-            </div>
-          </div>
-        </section>
-
-        {/* 3. Property Info */}
+        {/* 2. Property Info */}
         <section className="bg-keydeals-surface p-6 rounded-2xl border border-keydeals-border shadow-sm space-y-4">
           <h2 className="text-xl font-bold text-keydeals-text-primary mb-4 flex items-center gap-2">
             <Info className="w-5 h-5 text-keydeals-text-secondary/50" /> Property Info
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-bold text-keydeals-text-primary mb-1">Type</label>
               <select 
@@ -286,14 +260,13 @@ export function AddProperty() {
             </div>
             <div>
               <label className="block text-sm font-bold text-keydeals-text-primary mb-1">Purpose</label>
-              <select 
-                value={formData.purpose} 
-                onChange={e => updateFormData({ purpose: e.target.value as Purpose })}
-                className="w-full px-4 py-2 rounded-xl border border-keydeals-border bg-white text-keydeals-text-secondary focus:ring-2 focus:ring-keydeals-action transition-all"
-              >
-                <option value="Sale">Sale</option>
-                <option value="Rent">Rent</option>
-              </select>
+              <div className="w-full px-4 py-2 rounded-xl border border-keydeals-border bg-white/50 text-keydeals-text-secondary font-bold">
+                Sale
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-keydeals-text-primary mb-1">Date & Time Added</label>
+              <input type="datetime-local" value={formData.addedAt} onChange={e => updateFormData({ addedAt: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-keydeals-border bg-white text-keydeals-text-secondary focus:ring-2 focus:ring-keydeals-action transition-all" />
             </div>
           </div>
         </section>
@@ -320,27 +293,25 @@ export function AddProperty() {
             </div>
           </div>
 
-          <div className="pt-2">
-            <label className="block text-sm font-bold text-keydeals-text-primary mb-2">GPS Coordinates</label>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <button 
-                type="button"
-                onClick={handleCaptureLocation}
-                disabled={isLocating}
-                className="flex items-center gap-2 bg-keydeals-action text-white px-4 py-2.5 rounded-xl font-bold hover:bg-keydeals-action/90 transition-colors shadow-sm disabled:opacity-70"
-              >
-                <Navigation className={cn("w-4 h-4", isLocating && "animate-pulse")} />
-                {isLocating ? 'Capturing...' : 'Capture Current Location'}
-              </button>
-              
-              {formData.geopoint && (
-                <div className="flex items-center gap-2 text-sm text-emerald-900 bg-emerald-100 px-3 py-1.5 rounded-lg border border-emerald-300">
-                  <MapPin className="w-4 h-4" />
-                  {formData.geopoint.lat.toFixed(6)}, {formData.geopoint.lng.toFixed(6)}
-                </div>
-              )}
-            </div>
-            {locationError && <p className="text-red-600 text-sm mt-2 font-medium">{locationError}</p>}
+          <div className="pt-2 space-y-4">
+            <label className="block text-sm font-bold text-keydeals-text-primary mb-2">GPS Coordinates & Map Picker</label>
+            
+            {hasValidKey ? (
+              <APIProvider apiKey={API_KEY} version="weekly">
+                <LocationPicker 
+                  value={formData.geopoint} 
+                  onChange={(point) => updateFormData({ geopoint: point })}
+                  onAddressChange={(address) => updateFormData({ location: address })}
+                />
+              </APIProvider>
+            ) : (
+              <div className="p-6 border-2 border-dashed border-keydeals-border rounded-2xl bg-keydeals-bg/50 text-center">
+                <p className="text-keydeals-text-secondary font-medium">Google Maps API Key required for Geo-Capture System.</p>
+                <p className="text-xs text-keydeals-text-secondary/60 mt-1">Please add GOOGLE_MAPS_PLATFORM_KEY in Settings &gt; Secrets.</p>
+              </div>
+            )}
+            
+            {!hasValidKey && locationError && <p className="text-red-600 text-sm mt-2 font-medium">{locationError}</p>}
           </div>
         </section>
 
@@ -777,45 +748,25 @@ export function AddProperty() {
           </div>
         </section>
 
-        {/* 13. Follow-up / Second Visit */}
-        <section className="bg-keydeals-surface p-6 rounded-2xl border border-keydeals-border shadow-sm space-y-4">
-          <h2 className="text-xl font-bold text-keydeals-text-primary mb-4 flex items-center gap-2">
-            <CheckSquare className="w-5 h-5 text-keydeals-text-secondary/50" /> Follow-up / Second Visit
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
-            <div>
-              <label className="block text-sm font-bold text-keydeals-text-primary mb-1">Updated Date & Time for Second Visit</label>
-              <input type="datetime-local" value={formData.secondVisitTime} onChange={e => updateFormData({ secondVisitTime: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-keydeals-border bg-white text-keydeals-text-secondary focus:ring-2 focus:ring-keydeals-action focus:border-transparent" />
-            </div>
-            <div className="pb-2">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input type="checkbox" checked={formData.secondVisitConfirmed} onChange={e => updateFormData({ secondVisitConfirmed: e.target.checked })} className="w-5 h-5 text-keydeals-action rounded focus:ring-keydeals-action" />
-                <span className="font-bold text-keydeals-text-primary">Updating Confirmation</span>
-              </label>
-            </div>
-          </div>
-        </section>
-
-        {/* 14. Submit Buttons */}
+        {/* 13. Submit Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-end pt-6 border-t border-keydeals-border">
           <button 
-            type="submit" 
-            onClick={() => updateFormData({ status: 'Available' })} 
+            type="button" 
+            onClick={(e) => handleSubmit(e as any, 'Available')} 
             className="flex-1 sm:flex-none bg-emerald-600 text-white px-8 py-3.5 rounded-xl font-bold hover:bg-emerald-700 transition-colors shadow-md text-center"
           >
             Save as Available
           </button>
           <button 
-            type="submit" 
-            onClick={() => updateFormData({ status: 'Sold' })} 
+            type="button" 
+            onClick={(e) => handleSubmit(e as any, 'Sold')} 
             className="flex-1 sm:flex-none bg-keydeals-action text-white px-8 py-3.5 rounded-xl font-bold hover:bg-keydeals-action/90 transition-colors shadow-md text-center"
           >
             Save as Sold
           </button>
           <button 
-            type="submit" 
-            onClick={() => updateFormData({ status: 'Plan Cancelled' })} 
+            type="button" 
+            onClick={(e) => handleSubmit(e as any, 'Plan Cancelled')} 
             className="flex-1 sm:flex-none bg-keydeals-text-secondary text-white px-8 py-3.5 rounded-xl font-bold hover:bg-keydeals-text-secondary/90 transition-colors shadow-md text-center"
           >
             Save as Plan Cancelled

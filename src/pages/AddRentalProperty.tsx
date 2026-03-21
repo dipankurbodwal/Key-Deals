@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { 
   ArrowLeft, 
   MapPin, 
@@ -26,6 +26,11 @@ import {
 import { useProperties } from '../context/PropertyContext';
 import { Property, PropertyType } from '../types';
 import { cn } from '../lib/utils';
+import { APIProvider } from '@vis.gl/react-google-maps';
+import { LocationPicker } from '../components/LocationPicker';
+
+const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || process.env.GOOGLE_MAPS_PLATFORM_KEY || '';
+const hasValidKey = Boolean(API_KEY) && API_KEY !== 'YOUR_API_KEY';
 
 export function AddRentalProperty() {
   const navigate = useNavigate();
@@ -66,7 +71,7 @@ export function AddRentalProperty() {
     floors: {
       ground: { bedrooms: 1, washrooms: 1, livingRooms: 1, kitchens: 1 }
     },
-    geopoint: { lat: 0, lng: 0 },
+    geopoint: null as any,
     images: [],
     status: 'Available',
     ownerName: '',
@@ -87,6 +92,12 @@ export function AddRentalProperty() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!formData.geopoint || (formData.geopoint.lat === 0 && formData.geopoint.lng === 0)) {
+      alert('Please capture the property location on the map.');
+      return;
+    }
+
     setIsSubmitting(true);
     
     // Simulate API call
@@ -132,13 +143,30 @@ export function AddRentalProperty() {
 
   return (
     <div className="max-w-4xl mx-auto pb-24">
-      <div className="flex items-center gap-4 mb-8">
-        <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-          <ArrowLeft className="w-6 h-6 text-slate-600" />
-        </button>
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Post for Rent</h1>
-          <p className="text-slate-500">List your property for potential tenants.</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+            <ArrowLeft className="w-6 h-6 text-slate-600" />
+          </button>
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Post for Rent</h1>
+            <p className="text-slate-500">List your property for potential tenants.</p>
+          </div>
+        </div>
+
+        <div className="flex bg-slate-100 p-1 rounded-2xl border border-slate-200 shadow-sm">
+          <Link 
+            to="/add-property" 
+            className="px-6 py-2.5 rounded-xl font-bold transition-all text-slate-600 hover:bg-white/50"
+          >
+            Sale your property
+          </Link>
+          <Link 
+            to="/rentals/add" 
+            className="px-6 py-2.5 rounded-xl font-bold transition-all bg-[#002366] text-white shadow-md"
+          >
+            Rent your property
+          </Link>
         </div>
       </div>
 
@@ -146,7 +174,7 @@ export function AddRentalProperty() {
         {/* Property Category */}
         <section className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
+            <div className="p-2 bg-[#002366]/5 rounded-lg text-[#002366]">
               <Layers className="w-5 h-5" />
             </div>
             <h2 className="text-xl font-bold text-slate-900">Property Category</h2>
@@ -161,7 +189,7 @@ export function AddRentalProperty() {
                 className={cn(
                   "flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all gap-2",
                   formData.type === cat.value 
-                    ? "border-blue-600 bg-blue-50 text-blue-600 shadow-md" 
+                    ? "border-[#002366] bg-[#002366]/5 text-[#002366] shadow-md" 
                     : "border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200"
                 )}
               >
@@ -175,7 +203,7 @@ export function AddRentalProperty() {
         {/* Specifics - Conditional */}
         <section className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
+            <div className="p-2 bg-[#002366]/5 rounded-lg text-[#002366]">
               <CheckSquare className="w-5 h-5" />
             </div>
             <h2 className="text-xl font-bold text-slate-900">Property Specifics</h2>
@@ -194,7 +222,7 @@ export function AddRentalProperty() {
                       ...formData, 
                       floors: { ...formData.floors, ground: { ...formData.floors?.ground!, bedrooms: parseInt(e.target.value) } }
                     })}
-                    className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500" 
+                    className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#002366]" 
                   />
                 </div>
               </div>
@@ -224,7 +252,7 @@ export function AddRentalProperty() {
                       ...formData, 
                       floors: { ...formData.floors, ground: { ...formData.floors?.ground!, livingRooms: parseInt(e.target.value) } }
                     })}
-                    className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500" 
+                    className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#002366]" 
                   />
                 </div>
               </div>
@@ -239,7 +267,7 @@ export function AddRentalProperty() {
                       ...formData, 
                       floors: { ...formData.floors, ground: { ...formData.floors?.ground!, kitchens: parseInt(e.target.value) } }
                     })}
-                    className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500" 
+                    className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#002366]" 
                   />
                 </div>
               </div>
@@ -249,7 +277,7 @@ export function AddRentalProperty() {
                   type="number" 
                   value={formData.wardrobes} 
                   onChange={e => setFormData({ ...formData, wardrobes: parseInt(e.target.value) })}
-                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500" 
+                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#002366]" 
                 />
               </div>
               <div>
@@ -258,7 +286,7 @@ export function AddRentalProperty() {
                   type="number" 
                   value={formData.floorNumber} 
                   onChange={e => setFormData({ ...formData, floorNumber: parseInt(e.target.value) })}
-                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500" 
+                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#002366]" 
                 />
               </div>
               <div className="flex items-center gap-3 pt-8">
@@ -267,7 +295,7 @@ export function AddRentalProperty() {
                   id="furnishing"
                   checked={formData.furnishing} 
                   onChange={e => setFormData({ ...formData, furnishing: e.target.checked })}
-                  className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                  className="w-5 h-5 rounded border-slate-300 text-[#002366] focus:ring-[#002366]" 
                 />
                 <label htmlFor="furnishing" className="text-sm font-bold text-slate-700">Furnished?</label>
               </div>
@@ -287,7 +315,7 @@ export function AddRentalProperty() {
                       ...formData, 
                       floors: { ...formData.floors, ground: { ...formData.floors?.ground!, bedrooms: parseInt(e.target.value) } }
                     })}
-                    className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500" 
+                    className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#002366]" 
                   />
                 </div>
               </div>
@@ -302,7 +330,7 @@ export function AddRentalProperty() {
                       ...formData, 
                       floors: { ...formData.floors, ground: { ...formData.floors?.ground!, washrooms: parseInt(e.target.value) } }
                     })}
-                    className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500" 
+                    className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#002366]" 
                   />
                 </div>
               </div>
@@ -312,7 +340,7 @@ export function AddRentalProperty() {
                   id="furnishing_pg"
                   checked={formData.furnishing} 
                   onChange={e => setFormData({ ...formData, furnishing: e.target.checked })}
-                  className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                  className="w-5 h-5 rounded border-slate-300 text-[#002366] focus:ring-[#002366]" 
                 />
                 <label htmlFor="furnishing_pg" className="text-sm font-bold text-slate-700">Furnished?</label>
               </div>
@@ -327,7 +355,7 @@ export function AddRentalProperty() {
                   type="number" 
                   value={formData.frontage || ''} 
                   onChange={e => setFormData({ ...formData, frontage: parseInt(e.target.value) || undefined })}
-                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500" 
+                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#002366]" 
                   placeholder="e.g. 20"
                 />
               </div>
@@ -337,7 +365,7 @@ export function AddRentalProperty() {
                   type="number" 
                   value={formData.dimensionsLength || ''} 
                   onChange={e => setFormData({ ...formData, dimensionsLength: parseInt(e.target.value) || undefined })}
-                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500" 
+                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#002366]" 
                   placeholder="e.g. 50"
                 />
               </div>
@@ -347,7 +375,7 @@ export function AddRentalProperty() {
                   type="number" 
                   value={formData.dimensionsWidth || ''} 
                   onChange={e => setFormData({ ...formData, dimensionsWidth: parseInt(e.target.value) || undefined })}
-                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500" 
+                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#002366]" 
                   placeholder="e.g. 30"
                 />
               </div>
@@ -367,7 +395,7 @@ export function AddRentalProperty() {
                       id="manualArea"
                       checked={manualArea}
                       onChange={e => setManualArea(e.target.checked)}
-                      className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                    className="w-4 h-4 rounded border-slate-300 text-[#002366] focus:ring-[#002366]"
                     />
                     <label htmlFor="manualArea" className="text-xs text-slate-500">Manual override</label>
                   </div>
@@ -378,7 +406,7 @@ export function AddRentalProperty() {
                 <select 
                   value={formData.floorLevel} 
                   onChange={e => setFormData({ ...formData, floorLevel: e.target.value })}
-                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#002366]"
                 >
                   <option value="Basement">Basement</option>
                   <option value="Ground">Ground</option>
@@ -394,7 +422,7 @@ export function AddRentalProperty() {
                   type="text" 
                   value={formData.ceilingHeight} 
                   onChange={e => setFormData({ ...formData, ceilingHeight: e.target.value })}
-                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500" 
+                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#002366]" 
                   placeholder="e.g. 12 ft"
                 />
               </div>
@@ -405,7 +433,7 @@ export function AddRentalProperty() {
                     id="washroomAvailable"
                     checked={formData.washroomAvailable} 
                     onChange={e => setFormData({ ...formData, washroomAvailable: e.target.checked })}
-                    className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                    className="w-5 h-5 rounded border-slate-300 text-[#002366] focus:ring-[#002366]" 
                   />
                   <label htmlFor="washroomAvailable" className="text-sm font-bold text-slate-700">Washroom?</label>
                 </div>
@@ -415,7 +443,7 @@ export function AddRentalProperty() {
                     id="pantryAvailable"
                     checked={formData.pantryAvailable} 
                     onChange={e => setFormData({ ...formData, pantryAvailable: e.target.checked })}
-                    className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                    className="w-5 h-5 rounded border-slate-300 text-[#002366] focus:ring-[#002366]" 
                   />
                   <label htmlFor="pantryAvailable" className="text-sm font-bold text-slate-700">Pantry?</label>
                 </div>
@@ -425,7 +453,7 @@ export function AddRentalProperty() {
                     id="loadingDock"
                     checked={formData.loadingDock} 
                     onChange={e => setFormData({ ...formData, loadingDock: e.target.checked })}
-                    className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                    className="w-5 h-5 rounded border-slate-300 text-[#002366] focus:ring-[#002366]" 
                   />
                   <label htmlFor="loadingDock" className="text-sm font-bold text-slate-700">Loading Dock?</label>
                 </div>
@@ -437,7 +465,7 @@ export function AddRentalProperty() {
         {/* Amenities */}
         <section className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
+            <div className="p-2 bg-[#002366]/5 rounded-lg text-[#002366]">
               <Zap className="w-5 h-5" />
             </div>
             <h2 className="text-xl font-bold text-slate-900">Amenities</h2>
@@ -449,7 +477,7 @@ export function AddRentalProperty() {
                 type="checkbox" 
                 checked={formData.amenities?.fan} 
                 onChange={e => setFormData({ ...formData, amenities: { ...formData.amenities!, fan: e.target.checked } })}
-                className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                className="w-5 h-5 rounded border-slate-300 text-[#002366] focus:ring-[#002366]" 
               />
               <div className="flex items-center gap-2">
                 <Wind className="w-4 h-4 text-slate-400" />
@@ -461,7 +489,7 @@ export function AddRentalProperty() {
                 type="checkbox" 
                 checked={formData.amenities?.waterpump} 
                 onChange={e => setFormData({ ...formData, amenities: { ...formData.amenities!, waterpump: e.target.checked } })}
-                className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                className="w-5 h-5 rounded border-slate-300 text-[#002366] focus:ring-[#002366]" 
               />
               <div className="flex items-center gap-2">
                 <Droplets className="w-4 h-4 text-slate-400" />
@@ -473,7 +501,7 @@ export function AddRentalProperty() {
                 type="checkbox" 
                 checked={formData.amenities?.submeter} 
                 onChange={e => setFormData({ ...formData, amenities: { ...formData.amenities!, submeter: e.target.checked } })}
-                className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                className="w-5 h-5 rounded border-slate-300 text-[#002366] focus:ring-[#002366]" 
               />
               <div className="flex items-center gap-2">
                 <Zap className="w-4 h-4 text-slate-400" />
@@ -485,7 +513,7 @@ export function AddRentalProperty() {
                 type="checkbox" 
                 checked={formData.amenities?.ac} 
                 onChange={e => setFormData({ ...formData, amenities: { ...formData.amenities!, ac: e.target.checked } })}
-                className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                className="w-5 h-5 rounded border-slate-300 text-[#002366] focus:ring-[#002366]" 
               />
               <div className="flex items-center gap-2">
                 <AirVent className="w-4 h-4 text-slate-400" />
@@ -498,7 +526,7 @@ export function AddRentalProperty() {
         {/* Financials */}
         <section className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
+            <div className="p-2 bg-[#002366]/5 rounded-lg text-[#002366]">
               <IndianRupee className="w-5 h-5" />
             </div>
             <h2 className="text-xl font-bold text-slate-900">Financials</h2>
@@ -514,7 +542,7 @@ export function AddRentalProperty() {
                   type="text" 
                   value={formData.price} 
                   onChange={e => setFormData({ ...formData, price: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500" 
+                  className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#002366]" 
                   placeholder="e.g. 15,000"
                 />
               </div>
@@ -527,7 +555,7 @@ export function AddRentalProperty() {
                   type="text" 
                   value={formData.securityDeposit} 
                   onChange={e => setFormData({ ...formData, securityDeposit: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500" 
+                  className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#002366]" 
                   placeholder="e.g. 30,000"
                 />
               </div>
@@ -539,7 +567,7 @@ export function AddRentalProperty() {
                 <select 
                   value={formData.occupancy} 
                   onChange={e => setFormData({ ...formData, occupancy: e.target.value as any })}
-                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#002366]"
                 >
                   <option value="Independent">Independent</option>
                   <option value="Co-occupied">Co-occupied</option>
@@ -552,7 +580,7 @@ export function AddRentalProperty() {
         {/* Location & Geo-Capture */}
         <section className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
+            <div className="p-2 bg-[#002366]/5 rounded-lg text-[#002366]">
               <MapPin className="w-5 h-5" />
             </div>
             <h2 className="text-xl font-bold text-slate-900">Location Details</h2>
@@ -566,7 +594,7 @@ export function AddRentalProperty() {
                 type="text" 
                 value={formData.city} 
                 onChange={e => setFormData({ ...formData, city: e.target.value })}
-                className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500" 
+                className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#002366]" 
                 placeholder="e.g. Rohtak"
               />
             </div>
@@ -577,24 +605,38 @@ export function AddRentalProperty() {
                 type="text" 
                 value={formData.location} 
                 onChange={e => setFormData({ ...formData, location: e.target.value })}
-                className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500" 
+                className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#002366]" 
                 placeholder="e.g. Model Town"
               />
             </div>
           </div>
 
-          <div className="pt-4">
-            <button
-              type="button"
-              onClick={handleGPSCapture}
-              className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-2xl font-bold hover:bg-slate-800 transition-all shadow-lg"
-            >
-              <Navigation className="w-5 h-5" /> Lock GPS Coordinates
-            </button>
-            {formData.geopoint?.lat !== 0 && (
-              <p className="text-xs text-emerald-600 font-bold mt-2">
-                Coordinates locked: {formData.geopoint?.lat.toFixed(4)}, {formData.geopoint?.lng.toFixed(4)}
-              </p>
+          <div className="pt-4 space-y-4">
+            <label className="block text-sm font-bold text-slate-700 mb-2">GPS Coordinates & Map Picker</label>
+            
+            {hasValidKey ? (
+              <APIProvider apiKey={API_KEY} version="weekly">
+                <LocationPicker 
+                  value={formData.geopoint || null} 
+                  onChange={(point) => setFormData(prev => ({ ...prev, geopoint: point }))}
+                  onAddressChange={(address) => setFormData(prev => ({ ...prev, location: address }))}
+                />
+              </APIProvider>
+            ) : (
+              <div>
+                <button
+                  type="button"
+                  onClick={handleGPSCapture}
+                  className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-2xl font-bold hover:bg-slate-800 transition-all shadow-lg"
+                >
+                  <Navigation className="w-5 h-5" /> Lock GPS Coordinates
+                </button>
+                {formData.geopoint?.lat !== 0 && (
+                  <p className="text-xs text-emerald-600 font-bold mt-2">
+                    Coordinates locked: {formData.geopoint?.lat.toFixed(4)}, {formData.geopoint?.lng.toFixed(4)}
+                  </p>
+                )}
+              </div>
             )}
           </div>
         </section>
@@ -602,7 +644,7 @@ export function AddRentalProperty() {
         {/* Owner Details */}
         <section className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
+            <div className="p-2 bg-[#002366]/5 rounded-lg text-[#002366]">
               <Users className="w-5 h-5" />
             </div>
             <h2 className="text-xl font-bold text-slate-900">Owner Details</h2>
@@ -616,7 +658,7 @@ export function AddRentalProperty() {
                 type="text" 
                 value={formData.ownerName} 
                 onChange={e => setFormData({ ...formData, ownerName: e.target.value })}
-                className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500" 
+                className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#002366]" 
               />
             </div>
             <div>
@@ -626,7 +668,7 @@ export function AddRentalProperty() {
                 type="tel" 
                 value={formData.phoneNumber} 
                 onChange={e => setFormData({ ...formData, phoneNumber: e.target.value })}
-                className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500" 
+                className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#002366]" 
               />
             </div>
             <div>
@@ -636,7 +678,7 @@ export function AddRentalProperty() {
                 type="tel" 
                 value={formData.whatsappNumber} 
                 onChange={e => setFormData({ ...formData, whatsappNumber: e.target.value })}
-                className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500" 
+                className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#002366]" 
               />
             </div>
           </div>
@@ -649,7 +691,7 @@ export function AddRentalProperty() {
               type="submit"
               disabled={isSubmitting}
               className={cn(
-                "w-full py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 flex items-center justify-center gap-2",
+                "w-full py-4 bg-[#002366] text-white rounded-2xl font-bold hover:bg-[#002366]/90 transition-all shadow-lg shadow-[#002366]/20 flex items-center justify-center gap-2",
                 isSubmitting && "opacity-70 cursor-not-allowed"
               )}
             >

@@ -7,12 +7,19 @@ import { RentalMap } from '../components/RentalMap';
 
 export function Rentals() {
   const navigate = useNavigate();
-  const { properties, globalLocation } = useProperties();
+  const { properties, globalLocation, mode, user } = useProperties();
   
-  const rentalProperties = properties.filter(p => 
-    p.purpose === 'Rent' && 
-    (globalLocation === 'All India' || p.city === globalLocation)
-  );
+  const rentalProperties = properties.filter(p => {
+    if (p.purpose !== 'Rent') return false;
+    if (globalLocation !== 'All India' && p.city !== globalLocation) return false;
+    
+    if (mode === 'Marketplace') {
+      return p.is_published;
+    } else {
+      // Professionals mode: show only my inventory
+      return p.user_id === user?.id;
+    }
+  });
 
   return (
     <div className="space-y-8">

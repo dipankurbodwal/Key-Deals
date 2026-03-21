@@ -20,6 +20,7 @@ import {
 import { useProperties } from '../context/PropertyContext';
 import { UserRole, User } from '../types';
 import { supabase } from '../lib/supabase';
+import { Logo } from '../components/Logo';
 import { cn } from '../lib/utils';
 
 type OnboardingStep = 'role-selection' | 'form' | 'success';
@@ -60,6 +61,7 @@ export function Onboarding() {
     specialization: 'Residential',
     operatingCities: '',
     timeline: 'Immediate',
+    email: '',
     projectLat: null as number | null,
     projectLng: null as number | null
   });
@@ -92,6 +94,7 @@ export function Onboarding() {
         city: user.city || '',
         address: user.address || '',
         timeline: user.clientRequirements?.timeline || 'Immediate',
+        email: user.email || '',
         projectLat: user.businessProfile?.projectGeoLocation?.lat || null,
         projectLng: user.businessProfile?.projectGeoLocation?.lng || null
       }));
@@ -141,7 +144,7 @@ export function Onboarding() {
       }
 
       const updatedUser: User = {
-        ...(user || { id: 'u-' + Date.now(), name: '', email: '', phone: '', isAdmin: false, isSubscribed: false, referralCount: 0, referralEarnedCount: 0 }),
+        ...(user || { id: 'u-' + Date.now(), name: '', email: '', phone: '', isAdmin: false, isSubscribed: false, subscriptionStatus: 'inactive', referralCount: 0, referralEarnedCount: 0 }),
         role: selectedRole,
         name: (selectedRole === 'Broker' || selectedRole === 'Developer') ? formData.contactPerson : (formData.name || user?.name || ''),
         phone: formData.phone || formData.contactNumber || user?.phone || '',
@@ -266,7 +269,7 @@ export function Onboarding() {
       title: 'Broker', 
       icon: Briefcase, 
       desc: 'Manage your property inventory and leads.',
-      color: 'bg-blue-600'
+      color: 'bg-[#002366]'
     },
     { 
       id: 'Property Owner' as UserRole, 
@@ -303,27 +306,30 @@ export function Onboarding() {
               exit={{ opacity: 0, y: -20 }}
               className="space-y-8"
             >
+              <div className="flex justify-center mb-8">
+                <Logo size="xl" />
+              </div>
               <div className="text-center space-y-2">
-                <h1 className="text-4xl font-black text-[#1E3A8A] tracking-tight">How would you like to use Key Deals?</h1>
+                <h1 className="text-5xl font-black text-[#002366] tracking-tight">How would you like to use Key Deals?</h1>
                 <p className="text-slate-600 font-medium">Select a path to get started with a personalized experience.</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {roles.map((role) => (
-                  <button
-                    key={role.id}
-                    onClick={() => handleRoleSelect(role.id)}
-                    className="group relative bg-white p-6 rounded-3xl border-2 border-transparent hover:border-[#1E3A8A] transition-all duration-300 shadow-sm hover:shadow-xl text-left overflow-hidden"
-                  >
-                    <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 shadow-lg", role.color)}>
-                      <role.icon className="w-6 h-6 text-white" />
-                    </div>
-                    <h3 className="text-xl font-bold text-[#1E3A8A] mb-1">{role.title}</h3>
-                    <p className="text-slate-500 text-sm leading-relaxed">{role.desc}</p>
-                    <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <ArrowRight className="w-5 h-5 text-[#1E3A8A]" />
-                    </div>
-                  </button>
+                    <button
+                      key={role.id}
+                      onClick={() => handleRoleSelect(role.id)}
+                      className="group relative bg-white p-6 rounded-3xl border-2 border-transparent hover:border-[#002366] transition-all duration-300 shadow-sm hover:shadow-xl text-left overflow-hidden"
+                    >
+                      <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 shadow-lg", role.color)}>
+                        <role.icon className="w-6 h-6 text-white" />
+                      </div>
+                      <h3 className="text-xl font-bold text-[#002366] mb-1">{role.title}</h3>
+                      <p className="text-slate-500 text-sm leading-relaxed">{role.desc}</p>
+                      <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <ArrowRight className="w-5 h-5 text-[#002366]" />
+                      </div>
+                    </button>
                 ))}
               </div>
             </motion.div>
@@ -337,15 +343,15 @@ export function Onboarding() {
               exit={{ opacity: 0, x: -20 }}
               className="bg-white rounded-[2.5rem] p-8 md:p-12 shadow-2xl border border-[#A1BCDF]/30"
             >
-              <button 
-                onClick={() => setStep('role-selection')}
-                className="mb-8 text-sm font-bold text-[#1E3A8A] flex items-center gap-2 hover:translate-x-[-4px] transition-transform"
-              >
-                ← Back to selection
-              </button>
+                <button 
+                  onClick={() => setStep('role-selection')}
+                  className="mb-8 text-sm font-bold text-[#002366] flex items-center gap-2 hover:translate-x-[-4px] transition-transform"
+                >
+                  ← Back to selection
+                </button>
 
-              <div className="mb-10">
-                <h2 className="text-3xl font-black text-[#1E3A8A] mb-2">Complete your profile</h2>
+                <div className="mb-10">
+                  <h2 className="text-3xl font-black text-[#002366] mb-2">Complete your profile</h2>
                 <p className="text-slate-600 font-medium">
                   {selectedRole === 'Broker' && "Set up your broker profile to start managing inventory and connecting with clients."}
                   {selectedRole === 'Property Owner' && "Tell us a bit about yourself so we can help you list your property effectively."}
@@ -357,96 +363,96 @@ export function Onboarding() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 {selectedRole === 'Broker' && (
                   <>
-                    <div className="space-y-2">
-                      <label className="text-sm font-bold text-[#1E3A8A] ml-1">Company Name</label>
-                      <div className="relative">
-                        <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                        <input
-                          required
-                          name="companyName"
-                          value={formData.companyName}
-                          onChange={handleInputChange}
-                          className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
-                          placeholder="Enter your agency name"
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-sm font-bold text-[#1E3A8A] ml-1">Contact Person Name</label>
+                        <label className="text-sm font-bold text-[#002366] ml-1">Company Name</label>
                         <div className="relative">
-                          <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                          <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                           <input
                             required
-                            name="contactPerson"
-                            value={formData.contactPerson}
+                            name="companyName"
+                            value={formData.companyName}
                             onChange={handleInputChange}
-                            className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
-                            placeholder="Full Name"
+                            className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#002366] focus:ring-0 transition-all bg-slate-50/50"
+                            placeholder="Enter your agency name"
                           />
                         </div>
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-bold text-[#1E3A8A] ml-1">Contact Number</label>
-                        <div className="relative">
-                          <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                          <input
-                            required
-                            name="contactNumber"
-                            value={formData.contactNumber}
-                            onChange={handleInputChange}
-                            className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
-                            placeholder="Phone Number"
-                          />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-bold text-[#002366] ml-1">Contact Person Name</label>
+                          <div className="relative">
+                            <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                            <input
+                              required
+                              name="contactPerson"
+                              value={formData.contactPerson}
+                              onChange={handleInputChange}
+                              className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#002366] focus:ring-0 transition-all bg-slate-50/50"
+                              placeholder="Full Name"
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-bold text-[#002366] ml-1">Contact Number</label>
+                          <div className="relative">
+                            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                            <input
+                              required
+                              name="contactNumber"
+                              value={formData.contactNumber}
+                              onChange={handleInputChange}
+                              className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#002366] focus:ring-0 transition-all bg-slate-50/50"
+                              placeholder="Phone Number"
+                            />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-bold text-[#002366] ml-1">Operating City</label>
+                          <div className="relative">
+                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                            <input
+                              required
+                              name="operatingCity"
+                              value={formData.operatingCity}
+                              onChange={handleInputChange}
+                              className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#002366] focus:ring-0 transition-all bg-slate-50/50"
+                              placeholder="e.g. Mumbai, Delhi"
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-bold text-[#002366] ml-1">RERA Number (Optional)</label>
+                          <div className="relative">
+                            <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                            <input
+                              name="reraNumber"
+                              value={formData.reraNumber}
+                              onChange={handleInputChange}
+                              className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#002366] focus:ring-0 transition-all bg-slate-50/50"
+                              placeholder="Registration No."
+                            />
+                          </div>
+                        </div>
+                      </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-bold text-[#1E3A8A] ml-1">Operating City</label>
+                        <label className="text-sm font-bold text-[#002366] ml-1">Office Address</label>
                         <div className="relative">
                           <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                           <input
                             required
-                            name="operatingCity"
-                            value={formData.operatingCity}
+                            name="address"
+                            value={formData.address}
                             onChange={handleInputChange}
-                            className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
-                            placeholder="e.g. Mumbai, Delhi"
+                            className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#002366] focus:ring-0 transition-all bg-slate-50/50"
+                            placeholder="Complete office address"
                           />
                         </div>
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-bold text-[#1E3A8A] ml-1">RERA Number (Optional)</label>
-                        <div className="relative">
-                          <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                          <input
-                            name="reraNumber"
-                            value={formData.reraNumber}
-                            onChange={handleInputChange}
-                            className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
-                            placeholder="Registration No."
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-bold text-[#1E3A8A] ml-1">Office Address</label>
-                      <div className="relative">
-                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                        <input
-                          required
-                          name="address"
-                          value={formData.address}
-                          onChange={handleInputChange}
-                          className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
-                          placeholder="Complete office address"
-                        />
-                      </div>
-                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-sm font-bold text-[#1E3A8A] ml-1">Years of Experience</label>
+                        <label className="text-sm font-bold text-[#002366] ml-1">Years of Experience</label>
                         <div className="relative">
                           <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                           <input
@@ -454,18 +460,18 @@ export function Onboarding() {
                             name="yearsOfExperience"
                             value={formData.yearsOfExperience}
                             onChange={handleInputChange}
-                            className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
+                            className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#002366] focus:ring-0 transition-all bg-slate-50/50"
                             placeholder="e.g. 5"
                           />
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-bold text-[#1E3A8A] ml-1">Specialization</label>
+                        <label className="text-sm font-bold text-[#002366] ml-1">Specialization</label>
                         <select
                           name="specialization"
                           value={formData.specialization}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
+                          className="w-full px-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#002366] focus:ring-0 transition-all bg-slate-50/50"
                         >
                           <option value="Residential">Residential</option>
                           <option value="Commercial">Commercial</option>
@@ -479,7 +485,7 @@ export function Onboarding() {
                 {selectedRole === 'Property Owner' && (
                   <>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-[#1E3A8A] ml-1">Full Name</label>
+                      <label className="text-sm font-bold text-[#002366] ml-1">Full Name</label>
                       <div className="relative">
                         <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                         <input
@@ -487,43 +493,43 @@ export function Onboarding() {
                           name="name"
                           value={formData.name}
                           onChange={handleInputChange}
-                          className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
+                          className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#002366] focus:ring-0 transition-all bg-slate-50/50"
                           placeholder="Enter your name"
                         />
                       </div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-sm font-bold text-[#1E3A8A] ml-1">Phone Number</label>
-                        <div className="relative">
-                          <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                          <input
-                            required
-                            name="phone"
-                            value={formData.phone}
-                            onChange={handleInputChange}
-                            className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
-                            placeholder="Your contact number"
-                          />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-bold text-[#002366] ml-1">Phone Number</label>
+                          <div className="relative">
+                            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                            <input
+                              required
+                              name="phone"
+                              value={formData.phone}
+                              onChange={handleInputChange}
+                              className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#002366] focus:ring-0 transition-all bg-slate-50/50"
+                              placeholder="Your contact number"
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-bold text-[#002366] ml-1">City</label>
+                          <div className="relative">
+                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                            <input
+                              required
+                              name="city"
+                              value={formData.city}
+                              onChange={handleInputChange}
+                              className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#002366] focus:ring-0 transition-all bg-slate-50/50"
+                              placeholder="City"
+                            />
+                          </div>
                         </div>
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-bold text-[#1E3A8A] ml-1">City</label>
-                        <div className="relative">
-                          <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                          <input
-                            required
-                            name="city"
-                            value={formData.city}
-                            onChange={handleInputChange}
-                            className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
-                            placeholder="City"
-                          />
-                        </div>
-                      </div>
-                    </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-[#1E3A8A] ml-1">Do you want to Sell or Rent out?</label>
+                      <label className="text-sm font-bold text-[#002366] ml-1">Do you want to Sell or Rent out?</label>
                       <div className="grid grid-cols-2 gap-4">
                         {['Sell', 'Rent out'].map((opt) => (
                           <button
@@ -533,7 +539,7 @@ export function Onboarding() {
                             className={cn(
                               "py-4 rounded-2xl border-2 font-bold transition-all",
                               formData.purpose === opt 
-                                ? "bg-[#1E3A8A] text-white border-[#1E3A8A]" 
+                                ? "bg-[#002366] text-white border-[#002366]" 
                                 : "bg-slate-50 text-slate-500 border-slate-100 hover:border-slate-200"
                             )}
                           >
@@ -543,12 +549,12 @@ export function Onboarding() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-[#1E3A8A] ml-1">Property Type</label>
+                      <label className="text-sm font-bold text-[#002366] ml-1">Property Type</label>
                       <select
                         name="propertyType"
                         value={formData.propertyType}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
+                        className="w-full px-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#002366] focus:ring-0 transition-all bg-slate-50/50"
                       >
                         <option value="Flat/Apartment">Flat/Apartment</option>
                         <option value="House/Villa">House/Villa</option>
@@ -564,7 +570,7 @@ export function Onboarding() {
                 {selectedRole === 'Client' && (
                   <>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-[#1E3A8A] ml-1">Full Name</label>
+                      <label className="text-sm font-bold text-[#002366] ml-1">Full Name</label>
                       <div className="relative">
                         <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                         <input
@@ -572,13 +578,13 @@ export function Onboarding() {
                           name="name"
                           value={formData.name}
                           onChange={handleInputChange}
-                          className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
+                          className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#002366] focus:ring-0 transition-all bg-slate-50/50"
                           placeholder="Enter your name"
                         />
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-[#1E3A8A] ml-1">Phone Number</label>
+                      <label className="text-sm font-bold text-[#002366] ml-1">Phone Number</label>
                       <div className="relative">
                         <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                         <input
@@ -586,13 +592,13 @@ export function Onboarding() {
                           name="phone"
                           value={formData.phone}
                           onChange={handleInputChange}
-                          className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
+                          className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#002366] focus:ring-0 transition-all bg-slate-50/50"
                           placeholder="Your contact number"
                         />
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-[#1E3A8A] ml-1">I want to...</label>
+                      <label className="text-sm font-bold text-[#002366] ml-1">I want to...</label>
                       <div className="grid grid-cols-2 gap-4">
                         {['Purchase', 'On Rent'].map((opt) => (
                           <button
@@ -602,7 +608,7 @@ export function Onboarding() {
                             className={cn(
                               "py-4 rounded-2xl border-2 font-bold transition-all",
                               formData.purpose === opt 
-                                ? "bg-[#1E3A8A] text-white border-[#1E3A8A]" 
+                                ? "bg-[#002366] text-white border-[#002366]" 
                                 : "bg-slate-50 text-slate-500 border-slate-100 hover:border-slate-200"
                             )}
                           >
@@ -613,12 +619,12 @@ export function Onboarding() {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-sm font-bold text-[#1E3A8A] ml-1">Property Type</label>
+                        <label className="text-sm font-bold text-[#002366] ml-1">Property Type</label>
                         <select
                           name="propertyType"
                           value={formData.propertyType}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
+                          className="w-full px-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#002366] focus:ring-0 transition-all bg-slate-50/50"
                         >
                           <option value="Flat/Apartment">Flat/Apartment</option>
                           <option value="House/Villa">House/Villa</option>
@@ -629,14 +635,14 @@ export function Onboarding() {
                         </select>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-bold text-[#1E3A8A] ml-1">Preferred Location</label>
+                        <label className="text-sm font-bold text-[#002366] ml-1">Preferred Location</label>
                         <div className="relative">
                           <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                           <input
                             name="landmarks"
                             value={formData.landmarks}
                             onChange={handleInputChange}
-                            className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
+                            className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#002366] focus:ring-0 transition-all bg-slate-50/50"
                             placeholder="e.g. Downtown, Sector 14"
                           />
                         </div>
@@ -644,35 +650,35 @@ export function Onboarding() {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-sm font-bold text-[#1E3A8A] ml-1">Min Budget (₹)</label>
+                        <label className="text-sm font-bold text-[#002366] ml-1">Min Budget (₹)</label>
                         <input
                           type="number"
                           name="budgetMin"
                           value={formData.budgetMin}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
+                          className="w-full px-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#002366] focus:ring-0 transition-all bg-slate-50/50"
                           placeholder="0"
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-bold text-[#1E3A8A] ml-1">Max Budget (₹)</label>
+                        <label className="text-sm font-bold text-[#002366] ml-1">Max Budget (₹)</label>
                         <input
                           type="number"
                           name="budgetMax"
                           value={formData.budgetMax}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
+                          className="w-full px-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#002366] focus:ring-0 transition-all bg-slate-50/50"
                           placeholder="Any"
                         />
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-[#1E3A8A] ml-1">When do you plan to move/buy?</label>
+                      <label className="text-sm font-bold text-[#002366] ml-1">When do you plan to move/buy?</label>
                       <select
                         name="timeline"
                         value={formData.timeline}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
+                        className="w-full px-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#002366] focus:ring-0 transition-all bg-slate-50/50"
                       >
                         <option value="Immediate">Immediate</option>
                         <option value="1-3 months">1-3 months</option>
@@ -687,10 +693,10 @@ export function Onboarding() {
                           name="directOwnersOnly"
                           checked={formData.directOwnersOnly}
                           onChange={handleInputChange}
-                          className="w-5 h-5 text-[#1E3A8A] rounded-lg focus:ring-[#1E3A8A]"
+                          className="w-5 h-5 text-[#002366] rounded-lg focus:ring-[#002366]"
                         />
                         <div className="flex-1">
-                          <span className="block font-bold text-[#1E3A8A] text-sm">Direct Owners Only?</span>
+                          <span className="block font-bold text-[#002366] text-sm">Direct Owners Only?</span>
                           <span className="text-xs text-slate-500">Enable to get notified when a direct owner match is found.</span>
                         </div>
                         <Zap className={cn("w-5 h-5 transition-colors", formData.directOwnersOnly ? "text-amber-500" : "text-slate-300")} />
@@ -701,23 +707,23 @@ export function Onboarding() {
 
                 {selectedRole === 'Developer' && (
                   <>
-                    <div className="space-y-2">
-                      <label className="text-sm font-bold text-[#1E3A8A] ml-1">Developer/Company Name</label>
-                      <div className="relative">
-                        <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                        <input
-                          required
-                          name="developerName"
-                          value={formData.developerName}
-                          onChange={handleInputChange}
-                          className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
-                          placeholder="e.g. DLF, Godrej Properties"
-                        />
+                      <div className="space-y-2">
+                        <label className="text-sm font-bold text-[#002366] ml-1">Developer/Company Name</label>
+                        <div className="relative">
+                          <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                          <input
+                            required
+                            name="developerName"
+                            value={formData.developerName}
+                            onChange={handleInputChange}
+                            className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#002366] focus:ring-0 transition-all bg-slate-50/50"
+                            placeholder="e.g. DLF, Godrej Properties"
+                          />
+                        </div>
                       </div>
-                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-sm font-bold text-[#1E3A8A] ml-1">Contact Person</label>
+                        <label className="text-sm font-bold text-[#002366] ml-1">Contact Person</label>
                         <div className="relative">
                           <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                           <input
@@ -725,13 +731,13 @@ export function Onboarding() {
                             name="contactPerson"
                             value={formData.contactPerson}
                             onChange={handleInputChange}
-                            className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
+                            className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#002366] focus:ring-0 transition-all bg-slate-50/50"
                             placeholder="Full Name"
                           />
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-bold text-[#1E3A8A] ml-1">Contact Number</label>
+                        <label className="text-sm font-bold text-[#002366] ml-1">Contact Number</label>
                         <div className="relative">
                           <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                           <input
@@ -739,14 +745,14 @@ export function Onboarding() {
                             name="contactNumber"
                             value={formData.contactNumber}
                             onChange={handleInputChange}
-                            className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
+                            className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#002366] focus:ring-0 transition-all bg-slate-50/50"
                             placeholder="Phone Number"
                           />
                         </div>
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-[#1E3A8A] ml-1">Project Location</label>
+                      <label className="text-sm font-bold text-[#002366] ml-1">Project Location</label>
                       <div className="relative">
                         <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                         <input
@@ -754,17 +760,17 @@ export function Onboarding() {
                           name="projectLocation"
                           value={formData.projectLocation}
                           onChange={handleInputChange}
-                          className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
+                          className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#002366] focus:ring-0 transition-all bg-slate-50/50"
                           placeholder="City or Area"
                         />
                       </div>
                       <div className="mt-2 p-4 rounded-2xl border-2 border-slate-100 bg-slate-50/50">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-bold text-[#1E3A8A]">Geo Capturing for Client Site Navigation</span>
+                          <span className="text-sm font-bold text-[#002366]">Geo Capturing for Client Site Navigation</span>
                           <button
                             type="button"
                             onClick={handleCaptureLocation}
-                            className="px-4 py-2 bg-blue-100 text-[#1E3A8A] text-sm font-bold rounded-xl hover:bg-blue-200 transition-colors flex items-center gap-2"
+                            className="px-4 py-2 bg-[#002366]/10 text-[#002366] text-sm font-bold rounded-xl hover:bg-[#002366]/20 transition-colors flex items-center gap-2"
                           >
                             <MapPin className="w-4 h-4" />
                             Capture Location
@@ -792,13 +798,13 @@ export function Onboarding() {
                           value={formData.projectDetails}
                           onChange={handleInputChange}
                           rows={3}
-                          className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50 resize-none"
+                          className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#002366] focus:ring-0 transition-all bg-slate-50/50 resize-none"
                           placeholder="Briefly describe your project..."
                         />
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-[#1E3A8A] ml-1">Website (Optional)</label>
+                      <label className="text-sm font-bold text-[#002366] ml-1">Website (Optional)</label>
                       <div className="relative">
                         <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                         <input
@@ -806,20 +812,20 @@ export function Onboarding() {
                           name="website"
                           value={formData.website}
                           onChange={handleInputChange}
-                          className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
+                          className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#002366] focus:ring-0 transition-all bg-slate-50/50"
                           placeholder="https://www.example.com"
                         />
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-[#1E3A8A] ml-1">Operating Cities</label>
+                      <label className="text-sm font-bold text-[#002366] ml-1">Operating Cities</label>
                       <div className="relative">
                         <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                         <input
                           name="operatingCities"
                           value={formData.operatingCities}
                           onChange={handleInputChange}
-                          className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#1E3A8A] focus:ring-0 transition-all bg-slate-50/50"
+                          className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-100 focus:border-[#002366] focus:ring-0 transition-all bg-slate-50/50"
                           placeholder="e.g. Mumbai, Pune, Bangalore"
                         />
                       </div>
@@ -831,10 +837,10 @@ export function Onboarding() {
                           name="reraApproved"
                           checked={formData.reraApproved}
                           onChange={handleInputChange}
-                          className="w-5 h-5 text-[#1E3A8A] rounded-lg focus:ring-[#1E3A8A]"
+                          className="w-5 h-5 text-[#002366] rounded-lg focus:ring-[#002366]"
                         />
                         <div className="flex-1">
-                          <span className="block font-bold text-[#1E3A8A] text-sm">RERA Approved?</span>
+                          <span className="block font-bold text-[#002366] text-sm">RERA Approved?</span>
                           <span className="text-xs text-slate-500">Confirm if your project is RERA registered.</span>
                         </div>
                         <ShieldCheck className={cn("w-5 h-5 transition-colors", formData.reraApproved ? "text-emerald-500" : "text-slate-300")} />
@@ -850,7 +856,7 @@ export function Onboarding() {
                 )}
 
                 <div className="space-y-4">
-                  <div className="flex items-start gap-3 p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                  <div className="flex items-start gap-3 p-4 bg-[#002366]/5 rounded-2xl border border-[#002366]/10">
                     <div className="flex items-center h-5">
                       <input
                         id="termsAccepted"
@@ -859,12 +865,12 @@ export function Onboarding() {
                         required
                         checked={formData.termsAccepted}
                         onChange={handleInputChange}
-                        className="w-5 h-5 text-[#1E3A8A] rounded-lg focus:ring-[#1E3A8A] cursor-pointer"
+                        className="w-5 h-5 text-[#002366] rounded-lg focus:ring-[#002366] cursor-pointer"
                       />
                     </div>
                     <div className="text-sm">
-                      <label htmlFor="termsAccepted" className="font-bold text-[#1E3A8A] cursor-pointer">
-                        I agree to the <Link to="/terms" target="_blank" className="underline decoration-blue-300 hover:decoration-blue-700 transition-colors">Terms & Conditions</Link>
+                      <label htmlFor="termsAccepted" className="font-bold text-[#002366] cursor-pointer">
+                        I agree to the <Link to="/terms" target="_blank" className="underline decoration-[#002366]/30 hover:decoration-[#002366] transition-colors">Terms & Conditions</Link>
                       </label>
                       <p className="text-slate-500 text-xs mt-1">
                         By checking this box, you acknowledge that you have read and agree to our professional terms of service.
@@ -875,7 +881,7 @@ export function Onboarding() {
                   <button
                     type="submit"
                     disabled={isLoading || !formData.termsAccepted}
-                    className="w-full bg-[#1E3A8A] text-white py-5 rounded-2xl font-black text-lg shadow-xl shadow-blue-900/20 hover:bg-[#1E3A8A]/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+                    className="w-full bg-[#002366] text-white py-5 rounded-2xl font-black text-lg shadow-xl shadow-[#002366]/20 hover:bg-[#002366]/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
                   >
                     {isLoading ? (
                       <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin" />
@@ -903,7 +909,10 @@ export function Onboarding() {
               </div>
               
               <div className="space-y-2">
-                <h2 className="text-4xl font-black text-[#1E3A8A]">Welcome to Key Deals!</h2>
+                <div className="flex justify-center mb-8">
+                  <Logo size="xl" />
+                </div>
+                <h2 className="text-4xl font-black text-[#002366]">Welcome to Key Deals!</h2>
                 <p className="text-slate-600 font-medium text-lg">Your {selectedRole} account is ready to go.</p>
               </div>
 
@@ -947,7 +956,7 @@ export function Onboarding() {
 
               <button
                 onClick={handleFinish}
-                className="w-full bg-[#1E3A8A] text-white py-5 rounded-2xl font-black text-lg shadow-xl shadow-blue-900/20 hover:bg-[#1E3A8A]/90 transition-all"
+                className="w-full bg-[#002366] text-white py-5 rounded-2xl font-black text-lg shadow-xl shadow-[#002366]/20 hover:bg-[#002366]/90 transition-all"
               >
                 Get Started
               </button>

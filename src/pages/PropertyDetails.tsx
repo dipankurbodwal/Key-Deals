@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { MapPin, Phone, MessageCircle, Share2, Download, ArrowLeft, Calendar, User, Navigation, Edit, Trash2, Maximize2, Layers, Bath, ChefHat, Wind, Droplets, Zap, AirVent, IndianRupee, ShieldCheck, Users, Building2, ArrowDown } from 'lucide-react';
+import { MapPin, Phone, MessageCircle, Share2, Download, ArrowLeft, Calendar, User, Navigation, Edit, Trash2, Maximize2, Layers, Bath, ChefHat, Wind, Droplets, Zap, AirVent, IndianRupee, ShieldCheck, Users, Building2, ArrowDown, Store } from 'lucide-react';
 import { useProperties } from '../context/PropertyContext';
 import { cn } from '../lib/utils';
 import { format } from 'date-fns';
@@ -9,12 +9,26 @@ import { SinglePropertyMap } from '../components/SinglePropertyMap';
 export function PropertyDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { properties, deleteProperty } = useProperties();
+  const { properties, deleteProperty, updateProperty } = useProperties();
   const property = properties.find(p => p.id === id);
+  const { user } = useProperties();
 
   if (!property) {
     return <div className="p-8 text-center text-slate-500">Property not found.</div>;
   }
+
+  // Visibility check: If not published and not the owner/admin, don't show
+  const isOwner = user?.id === property.user_id;
+  const isAdmin = user?.isAdmin;
+  const canEdit = isOwner || isAdmin;
+
+  if (!property.is_published && !canEdit) {
+    return <div className="p-8 text-center text-slate-500">This property is private.</div>;
+  }
+
+  const handleTogglePublish = () => {
+    updateProperty({ ...property, is_published: !property.is_published });
+  };
 
   const handleDelete = () => {
     if (window.confirm('Are you sure you want to delete this property?')) {
@@ -68,28 +82,44 @@ END:VCARD`;
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Link 
-            to={`/edit-property/${property.id}`}
-            className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-xl font-medium hover:bg-slate-50 transition-colors shadow-sm"
-          >
-            <Edit className="w-4 h-4" /> Edit
-          </Link>
-          <button 
-            onClick={handleDelete}
-            className="flex items-center gap-2 bg-red-50 border border-red-100 text-red-600 px-4 py-2 rounded-xl font-medium hover:bg-red-100 transition-colors shadow-sm"
-          >
-            <Trash2 className="w-4 h-4" /> Delete
-          </button>
+          {canEdit && (
+            <>
+              <button 
+                onClick={handleTogglePublish}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-colors shadow-sm border",
+                  property.is_published 
+                    ? "bg-purple-50 border-purple-100 text-purple-700 hover:bg-purple-100" 
+                    : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                )}
+              >
+                <Store className="w-4 h-4" />
+                {property.is_published ? 'Unpublish from Market' : 'Publish to Market'}
+              </button>
+              <Link 
+                to={`/edit-property/${property.id}`}
+                className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-xl font-medium hover:bg-slate-50 transition-colors shadow-sm"
+              >
+                <Edit className="w-4 h-4" /> Edit
+              </Link>
+              <button 
+                onClick={handleDelete}
+                className="flex items-center gap-2 bg-red-50 border border-red-100 text-red-600 px-4 py-2 rounded-xl font-medium hover:bg-red-100 transition-colors shadow-sm"
+              >
+                <Trash2 className="w-4 h-4" /> Delete
+              </button>
+            </>
+          )}
         </div>
       </div>
 
       {/* Gallery */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[400px]">
         <div className="md:col-span-2 h-full rounded-2xl overflow-hidden shadow-sm">
-          <img src={property.images[0]} alt="Main" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+          <img src={property.images?.[0] || 'https://picsum.photos/seed/' + property.id + '/800/600'} alt="Main" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
         </div>
         <div className="hidden md:flex flex-col gap-4 h-full">
-          {property.images.slice(1, 3).map((img, idx) => (
+          {(property.images || []).slice(1, 3).map((img, idx) => (
             <div key={idx} className="flex-1 rounded-2xl overflow-hidden shadow-sm">
               <img src={img} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
             </div>

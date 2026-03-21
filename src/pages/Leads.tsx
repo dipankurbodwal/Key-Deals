@@ -284,7 +284,7 @@ export function Leads() {
                       <p className="text-sm text-keydeals-text-secondary truncate font-medium">{property.location} • ₹{property.price}</p>
                     </div>
                     <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
-                      <img src={property.images[0]} alt="" className="w-full h-full object-cover" />
+                      <img src={property.images[0] || 'https://picsum.photos/seed/' + property.id + '/800/600'} alt="" className="w-full h-full object-cover" />
                     </div>
                   </div>
                 );

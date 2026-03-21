@@ -1,12 +1,12 @@
 export type PropertyStatus = 'Available' | 'Sold' | 'Plan Cancelled';
 
-export type PropertyType = 'Residential Plot' | 'Residential House' | 'Commercial space' | 'Shop' | 'Office space' | 'Farm House' | 'Farm Land' | 'Flat/Apartment' | 'Office' | 'Co-working Space' | 'P.G';
+export type PropertyType = 'House' | 'Flat/Apartment' | 'P.G' | 'Shop' | 'Commercial Space' | 'Office Space' | 'Co-Working Space' | 'Warehouse' | 'Farmland' | 'Farmhouse';
 export type FacingType = 'East' | 'West' | 'South' | 'North' | 'South-East' | 'South-West' | 'North-East' | 'North-West';
 export type RoadType = 'Paved' | 'Kacha' | 'Main Road';
 export type DocStatus = 'Original' | 'Photocopy' | 'None';
 export type QuotedBy = 'Owner' | 'Broker';
 export type Purpose = 'Rent' | 'Sale';
-export type PurchasePurpose = 'Rent' | 'Purchase';
+export type PurchasePurpose = 'Rent' | 'Purchase' | 'On Rent';
 export type LeadSource = 'Direct' | 'Broker';
 
 export interface GeoPoint {
@@ -19,6 +19,13 @@ export interface FloorDetails {
   washrooms: number;
   livingRooms: number;
   kitchens: number;
+}
+
+export interface FollowUp {
+  id: string;
+  date: string; // ISO string
+  visitedBy: string;
+  notes?: string;
 }
 
 export interface Property {
@@ -97,6 +104,7 @@ export interface Property {
   addedAt?: string; // ISO string
   visitTime?: string; // ISO string
   visitedBy?: string;
+  followUps?: FollowUp[];
   
   // Documentation
   mutationDoc?: DocStatus;
@@ -140,11 +148,13 @@ export interface Property {
   secondVisitConfirmed?: boolean;
 
   // Marketplace
-  is_public?: boolean;
+  is_published?: boolean;
+  user_id?: string;
 }
 
 export interface Lead {
   id: string;
+  user_id?: string;
   name: string;
   phone: string;
   whatsapp: string;
@@ -165,6 +175,7 @@ export interface Lead {
 
   // Cart
   cartProperties?: string[]; // Array of Property IDs
+  followUps?: FollowUp[];
 }
 
 export interface CompanySettings {
@@ -201,6 +212,7 @@ export interface AdminSettings {
   marketplaceSubscriptionAmount: number;
   projectAdSubscriptionAmount: number;
   rentalPostingFee: number;
+  leadUnlockFee: number;
 }
 
 export interface Advertisement {
@@ -216,9 +228,11 @@ export interface Advertisement {
   expiresAt: string;
   isPaid: boolean;
   brochures?: string[];
+  address?: string;
+  geopoint?: GeoPoint;
 }
 
-export type UserRole = 'Broker' | 'Owner' | 'Client' | 'Developer';
+export type UserRole = 'Broker' | 'Owner' | 'Client' | 'Developer' | 'Property Owner' | 'Guest';
 
 export interface User {
   id: string;
@@ -238,6 +252,7 @@ export interface User {
   referralEarnedCount: number;
   role?: UserRole;
   onboardingCompleted?: boolean;
+  createdAt?: string;
   city?: string; // Mandatory for broker directory
   address?: string; // Mandatory for broker directory
   businessProfile?: {

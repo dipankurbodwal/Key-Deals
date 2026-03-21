@@ -71,13 +71,13 @@ export function PropertyRequired() {
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xl">
-                    {lead.name.charAt(0)}
+                    {lead?.name?.charAt(0) || 'L'}
                   </div>
                   <div>
-                    <h3 className="font-bold text-keydeals-text-primary">{lead.name}</h3>
+                    <h3 className="font-bold text-keydeals-text-primary">{lead?.name || 'Lead'}</h3>
                     <div className="flex items-center gap-1 text-xs text-keydeals-text-secondary">
                       <Calendar className="w-3 h-3" />
-                      {new Date(lead.clientRequirements?.postedAt || '').toLocaleDateString()}
+                      {lead?.clientRequirements?.postedAt ? new Date(lead.clientRequirements.postedAt).toLocaleDateString() : 'N/A'}
                     </div>
                   </div>
                 </div>
@@ -89,15 +89,15 @@ export function PropertyRequired() {
               <div className="space-y-3 py-2">
                 <div className="flex items-center gap-2 text-sm text-keydeals-text-secondary">
                   <MapPin className="w-4 h-4 text-blue-700" />
-                  <span className="font-medium">{lead.clientRequirements?.landmarks}, {lead.clientRequirements?.location}</span>
+                  <span className="font-medium">{lead?.clientRequirements?.landmarks || 'N/A'}, {lead?.clientRequirements?.location || 'N/A'}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-keydeals-text-secondary">
                   <Users className="w-4 h-4 text-blue-700" />
-                  <span className="font-medium">{lead.clientRequirements?.propertyType}</span>
+                  <span className="font-medium">{lead?.clientRequirements?.propertyType || 'N/A'}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-keydeals-text-secondary">
                   <IndianRupee className="w-4 h-4 text-blue-700" />
-                  <span className="font-bold text-blue-700">₹{lead.clientRequirements?.budgetMin.toLocaleString()} - ₹{lead.clientRequirements?.budgetMax.toLocaleString()}</span>
+                  <span className="font-bold text-blue-700">₹{lead?.clientRequirements?.budgetMin?.toLocaleString() || '0'} - ₹{lead?.clientRequirements?.budgetMax?.toLocaleString() || '0'}</span>
                 </div>
               </div>
 

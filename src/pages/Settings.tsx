@@ -125,14 +125,14 @@ export function Settings() {
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold text-keydeals-text-primary tracking-tight flex items-center gap-3">
-            <SettingsIcon className="w-8 h-8 text-blue-700" /> {t('nav.settings')}
+            <SettingsIcon className="w-8 h-8 text-[#002366]" /> {t('nav.settings')}
           </h1>
           <p className="text-keydeals-text-secondary mt-1">Manage your preferences, company profile and message templates.</p>
         </div>
         {user?.isAdmin && (
           <Link 
             to="/admin" 
-            className="flex items-center gap-2 bg-blue-700 text-white px-4 py-2 rounded-xl font-bold hover:bg-blue-800 transition-colors shadow-sm"
+            className="flex items-center gap-2 bg-[#002366] text-white px-4 py-2 rounded-xl font-bold hover:bg-[#002366]/90 transition-colors shadow-sm"
           >
             <Store className="w-5 h-5 text-keydeals-surface" />
             Success Dashboard
@@ -152,13 +152,13 @@ export function Settings() {
               {/* Language */}
               <div className="space-y-3">
                 <label className="text-sm font-semibold text-keydeals-text-primary flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-blue-700" /> {t('settings.language')}
+                  <Globe className="w-4 h-4 text-[#002366]" /> {t('settings.language')}
                 </label>
                 <div className="relative">
                   <select
                     value={i18n.language}
                     onChange={(e) => changeLanguage(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-keydeals-border bg-white text-keydeals-text-secondary focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all appearance-none"
+                    className="w-full px-4 py-2.5 rounded-xl border border-keydeals-border bg-white text-keydeals-text-secondary focus:outline-none focus:ring-2 focus:ring-[#002366] transition-all appearance-none"
                   >
                     {LANGUAGES.map((lang) => (
                       <option key={lang.code} value={lang.code}>
@@ -178,10 +178,10 @@ export function Settings() {
                 className="flex items-center justify-between p-3 bg-white/20 rounded-xl border border-keydeals-border group hover:bg-white/30 transition-all"
               >
                 <div className="flex items-center gap-3">
-                  <Calculator className="w-5 h-5 text-blue-700" />
+                  <Calculator className="w-5 h-5 text-[#002366]" />
                   <span className="text-sm font-bold text-keydeals-text-primary">Land Area Calculator</span>
                 </div>
-                <ArrowRight className="w-4 h-4 text-blue-700 group-hover:translate-x-1 transition-transform" />
+                <ArrowRight className="w-4 h-4 text-[#002366] group-hover:translate-x-1 transition-transform" />
               </Link>
 
               {/* Terms & Conditions */}
@@ -190,10 +190,10 @@ export function Settings() {
                 className="flex items-center justify-between p-3 bg-white/20 rounded-xl border border-keydeals-border group hover:bg-white/30 transition-all"
               >
                 <div className="flex items-center gap-3">
-                  <FileText className="w-5 h-5 text-blue-700" />
+                  <FileText className="w-5 h-5 text-[#002366]" />
                   <span className="text-sm font-bold text-keydeals-text-primary">Terms & Conditions</span>
                 </div>
-                <ArrowRight className="w-4 h-4 text-blue-700 group-hover:translate-x-1 transition-transform" />
+                <ArrowRight className="w-4 h-4 text-[#002366] group-hover:translate-x-1 transition-transform" />
               </Link>
 
               {/* Biometrics */}
@@ -229,7 +229,7 @@ export function Settings() {
             <div className="p-6 space-y-4">
               <div className="p-4 bg-white/20 rounded-xl border border-keydeals-border text-center">
                 <p className="text-xs font-bold text-keydeals-text-primary uppercase tracking-wider mb-2">Your Referral Link</p>
-                <code className="text-sm text-blue-800 break-all font-bold">
+                <code className="text-sm text-[#002366] break-all font-bold">
                   {window.location.origin}/signup?ref={user?.id}
                 </code>
               </div>
@@ -275,7 +275,7 @@ export function Settings() {
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-keydeals-text-primary flex items-center gap-2">
-                      <Building2 className="w-4 h-4 text-blue-700" /> Company Name
+                      <Building2 className="w-4 h-4 text-[#002366]" /> Company Name
                     </label>
                     <input
                       type="text"
@@ -283,7 +283,7 @@ export function Settings() {
                       value={formData.companyName}
                       onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
                       className={cn(
-                        "w-full px-4 py-2.5 rounded-xl border border-keydeals-border bg-white text-keydeals-text-secondary focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium",
+                        "w-full px-4 py-2.5 rounded-xl border border-keydeals-border bg-white text-keydeals-text-secondary focus:outline-none focus:ring-2 focus:ring-[#002366] transition-all font-medium",
                         isLoading && "animate-pulse bg-slate-50"
                       )}
                       placeholder={isLoading ? "Loading..." : "Enter company name"}
@@ -293,7 +293,7 @@ export function Settings() {
 
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-keydeals-text-primary flex items-center gap-2">
-                      <User className="w-4 h-4 text-blue-700" /> Contact Person
+                      <User className="w-4 h-4 text-[#002366]" /> Contact Person
                     </label>
                     <input
                       type="text"
@@ -301,7 +301,7 @@ export function Settings() {
                       value={formData.contactPerson}
                       onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
                       className={cn(
-                        "w-full px-4 py-2.5 rounded-xl border border-keydeals-border bg-white text-keydeals-text-secondary focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium",
+                        "w-full px-4 py-2.5 rounded-xl border border-keydeals-border bg-white text-keydeals-text-secondary focus:outline-none focus:ring-2 focus:ring-[#002366] transition-all font-medium",
                         isLoading && "animate-pulse bg-slate-50"
                       )}
                       placeholder={isLoading ? "Loading..." : "Enter contact person name"}
@@ -311,7 +311,7 @@ export function Settings() {
 
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-keydeals-text-primary flex items-center gap-2">
-                      <Phone className="w-4 h-4 text-blue-700" /> Contact Number
+                      <Phone className="w-4 h-4 text-[#002366]" /> Contact Number
                     </label>
                     <input
                       type="tel"
@@ -319,7 +319,7 @@ export function Settings() {
                       value={formData.contactNumber}
                       onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
                       className={cn(
-                        "w-full px-4 py-2.5 rounded-xl border border-keydeals-border bg-white text-keydeals-text-secondary focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium",
+                        "w-full px-4 py-2.5 rounded-xl border border-keydeals-border bg-white text-keydeals-text-secondary focus:outline-none focus:ring-2 focus:ring-[#002366] transition-all font-medium",
                         isLoading && "animate-pulse bg-slate-50"
                       )}
                       placeholder={isLoading ? "Loading..." : "Enter contact number"}
@@ -329,7 +329,7 @@ export function Settings() {
 
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-keydeals-text-primary flex items-center gap-2">
-                      <Mail className="w-4 h-4 text-blue-700" /> Customer Care Email
+                      <Mail className="w-4 h-4 text-[#002366]" /> Customer Care Email
                     </label>
                     <input
                       type="email"
@@ -354,33 +354,33 @@ export function Settings() {
               <div className="p-6 space-y-8">
                 <div className="space-y-3">
                   <label className="text-sm font-semibold text-keydeals-text-primary flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-blue-700" /> Client Visit Summary Template
+                    <FileText className="w-4 h-4 text-[#002366]" /> Client Visit Summary Template
                   </label>
                   <p className="text-xs text-keydeals-text-secondary/70">
-                    Available variables: <code className="bg-white/30 px-1.5 py-0.5 rounded text-blue-800">[List: Property Type, Landmark, Price]</code>, <code className="bg-white/30 px-1.5 py-0.5 rounded text-blue-800">{'{companyName}'}</code>, <code className="bg-white/30 px-1.5 py-0.5 rounded text-blue-800">{'{Contact Person}'}</code>, <code className="bg-white/30 px-1.5 py-0.5 rounded text-blue-800">{'{contactNumber}'}</code>
+                    Available variables: <code className="bg-white/30 px-1.5 py-0.5 rounded text-[#002366]">[List: Property Type, Landmark, Price]</code>, <code className="bg-white/30 px-1.5 py-0.5 rounded text-[#002366]">{'{companyName}'}</code>, <code className="bg-white/30 px-1.5 py-0.5 rounded text-[#002366]">{'{Contact Person}'}</code>, <code className="bg-white/30 px-1.5 py-0.5 rounded text-[#002366]">{'{contactNumber}'}</code>
                   </p>
                   <textarea
                     required
                     rows={6}
                     value={formData.clientVisitTemplate}
                     onChange={(e) => setFormData({ ...formData, clientVisitTemplate: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border border-keydeals-border bg-white text-keydeals-text-secondary focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow font-mono text-sm"
+                    className="w-full px-4 py-3 rounded-xl border border-keydeals-border bg-white text-keydeals-text-secondary focus:outline-none focus:ring-2 focus:ring-[#002366] transition-shadow font-mono text-sm"
                   />
                 </div>
 
                 <div className="space-y-3">
                   <label className="text-sm font-semibold text-keydeals-text-primary flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-blue-700" /> Property Owner Notification Template
+                    <FileText className="w-4 h-4 text-[#002366]" /> Property Owner Notification Template
                   </label>
                   <p className="text-xs text-keydeals-text-secondary/70">
-                    Available variables: <code className="bg-white/30 px-1.5 py-0.5 rounded text-blue-800">{'{ownerName}'}</code>, <code className="bg-white/30 px-1.5 py-0.5 rounded text-blue-800">{'{address}'}</code>, <code className="bg-white/30 px-1.5 py-0.5 rounded text-blue-800">{'{propertyType}'}</code>, <code className="bg-white/30 px-1.5 py-0.5 rounded text-blue-800">{'{price}'}</code>, <code className="bg-white/30 px-1.5 py-0.5 rounded text-blue-800">{'{companyName}'}</code>, <code className="bg-white/30 px-1.5 py-0.5 rounded text-blue-800">{'{Contact Person}'}</code>, <code className="bg-white/30 px-1.5 py-0.5 rounded text-blue-800">{'{contactNumber}'}</code>
+                    Available variables: <code className="bg-white/30 px-1.5 py-0.5 rounded text-[#002366]">{'{ownerName}'}</code>, <code className="bg-white/30 px-1.5 py-0.5 rounded text-[#002366]">{'{address}'}</code>, <code className="bg-white/30 px-1.5 py-0.5 rounded text-[#002366]">{'{propertyType}'}</code>, <code className="bg-white/30 px-1.5 py-0.5 rounded text-[#002366]">{'{price}'}</code>, <code className="bg-white/30 px-1.5 py-0.5 rounded text-[#002366]">{'{companyName}'}</code>, <code className="bg-white/30 px-1.5 py-0.5 rounded text-[#002366]">{'{Contact Person}'}</code>, <code className="bg-white/30 px-1.5 py-0.5 rounded text-[#002366]">{'{contactNumber}'}</code>
                   </p>
                   <textarea
                     required
                     rows={8}
                     value={formData.propertyOwnerTemplate}
                     onChange={(e) => setFormData({ ...formData, propertyOwnerTemplate: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border border-keydeals-border bg-white text-keydeals-text-secondary focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow font-mono text-sm"
+                    className="w-full px-4 py-3 rounded-xl border border-keydeals-border bg-white text-keydeals-text-secondary focus:outline-none focus:ring-2 focus:ring-[#002366] transition-shadow font-mono text-sm"
                   />
                 </div>
               </div>
@@ -398,7 +398,7 @@ export function Settings() {
               <button
                 type="submit"
                 disabled={isSaving}
-                className="w-full md:w-64 flex items-center justify-center gap-2 bg-blue-700 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-800 transition-colors shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full md:w-64 flex items-center justify-center gap-2 bg-[#002366] text-white px-8 py-3 rounded-xl font-bold hover:bg-[#002366]/90 transition-colors shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 <Save className="w-5 h-5 text-keydeals-surface" />
                 {isSaving ? 'Saving...' : t('buttons.save')}
@@ -462,12 +462,12 @@ function FeedbackForm() {
         placeholder="Type your feedback here..."
         value={message}
         onChange={(e) => setMessage(e.target.value)}
-        className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+        className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#002366] focus:border-transparent transition-shadow"
       />
       <button
         type="submit"
         disabled={isSubmitting}
-        className="flex items-center gap-2 bg-blue-700 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-blue-800 transition-colors shadow-sm disabled:opacity-70"
+        className="flex items-center gap-2 bg-[#002366] text-white px-6 py-2.5 rounded-xl font-bold hover:bg-[#002366]/90 transition-colors shadow-sm disabled:opacity-70"
       >
         <Mail className="w-4 h-4 text-keydeals-surface" />
         {isSubmitting ? 'Sending...' : 'Send Feedback'}

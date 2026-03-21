@@ -51,6 +51,8 @@ interface PropertyContextType {
   globalLocation: string;
   setGlobalLocation: (location: string) => void;
 
+  isAuthReady: boolean;
+
   advertisements: Advertisement[];
   addAdvertisement: (ad: Advertisement) => void;
 
@@ -89,12 +91,12 @@ export function PropertyProvider({ children }: { children: React.ReactNode }) {
   });
 
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([
-    { id: '1', userId: 'u1', userName: 'John Doe', message: 'Great app! Love the search feature.', createdAt: '2023-12-01T10:00:00Z' },
-    { id: '2', userId: 'u2', userName: 'Jane Smith', message: 'Could you add more filters for property types?', createdAt: '2023-12-02T11:30:00Z' },
+    { id: '1', userId: 'u1', userName: 'John Doe', email: 'john@example.com', message: 'Great app! Love the search feature.', createdAt: '2023-12-01T10:00:00Z' },
+    { id: '2', userId: 'u2', userName: 'Jane Smith', email: 'jane@example.com', message: 'Could you add more filters for property types?', createdAt: '2023-12-02T11:30:00Z' },
   ]);
   const [payments, setPayments] = useState<SubscriptionPayment[]>([
-    { id: 'p1', userId: 'u1', userName: 'John Doe', amount: 999, status: 'approved', transactionId: 'TXN123456', date: '2023-12-01T09:00:00Z' },
-    { id: 'p2', userId: 'u2', userName: 'Jane Smith', amount: 999, status: 'pending', transactionId: 'TXN789012', date: '2023-12-02T10:00:00Z' },
+    { id: 'p1', userId: 'u1', userName: 'John Doe', amount: 999, status: 'approved', transactionId: 'TXN123456', date: '2023-12-01T09:00:00Z', type: 'marketplace' },
+    { id: 'p2', userId: 'u2', userName: 'Jane Smith', amount: 999, status: 'pending', transactionId: 'TXN789012', date: '2023-12-02T10:00:00Z', type: 'project_ad' },
   ]);
   const [adminSettings, setAdminSettings] = useState<AdminSettings>({
     marketplaceSubscriptionEnabled: true,
@@ -155,6 +157,7 @@ export function PropertyProvider({ children }: { children: React.ReactNode }) {
   const [globalLocation, setGlobalLocation] = useState(() => {
     return localStorage.getItem('keydeals_global_location') || 'All India';
   });
+  const [isAuthReady, setIsAuthReady] = useState(false);
   const [advertisements, setAdvertisements] = useState<Advertisement[]>([]);
   const [brokers, setBrokers] = useState<User[]>([]);
 
@@ -229,75 +232,27 @@ export function PropertyProvider({ children }: { children: React.ReactNode }) {
   
   // Sync user with Supabase Auth
   useEffect(() => {
-    if (!supabase) return;
+    if (!supabase) {
+      setIsAuthReady(true);
+      return;
+    }
 
-    // Check active session on mount
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        // If we have a session but no user state, or different user, update it
-        // We might need to fetch the profile from 'profiles' table too
-        const fetchProfile = async () => {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .maybeSingle();
-          
-          if (profile) {
-            setUser({
-              id: session.user.id,
-              email: session.user.email || '',
-              name: profile.full_name || '',
-              phone: profile.phone_number || '',
-              role: profile.role as UserRole,
-              onboardingCompleted: profile.onboarding_completed,
-              isAdmin: profile.is_admin || false,
-              isSubscribed: profile.is_subscribed || false,
-              subscriptionStatus: profile.subscription_status || 'inactive',
-              subscriptionExpiry: profile.subscription_expiry,
-              referralCount: profile.referral_count || 0,
-              referralEarnedCount: profile.referral_earned_count || 0,
-              businessProfile: profile.business_profile,
-              clientRequirements: profile.client_requirements,
-              ownerProfile: profile.owner_profile,
-              city: profile.city,
-              address: profile.address
-            });
-          } else {
-            // No profile yet, but we have auth user
-            setUser({
-              id: session.user.id,
-              email: session.user.email || '',
-              name: session.user.user_metadata?.full_name || '',
-              phone: session.user.user_metadata?.phone || '',
-              isAdmin: false,
-              isSubscribed: false,
-              referralCount: 0,
-              referralEarnedCount: 0,
-              onboardingCompleted: false
-            });
-          }
-        };
-        fetchProfile();
-      }
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        const { data: profile } = await supabase
+    const fetchProfile = async (sessionUser: any) => {
+      try {
+        const { data: profile, error } = await supabase
           .from('profiles')
           .select('*')
-          .eq('id', session.user.id)
+          .eq('id', sessionUser.id)
           .maybeSingle();
-
+        
         if (profile) {
-          setUser({
-            id: session.user.id,
-            email: session.user.email || '',
+          const userData: User = {
+            id: sessionUser.id,
+            email: sessionUser.email || '',
             name: profile.full_name || '',
             phone: profile.phone_number || '',
             role: profile.role as UserRole,
-            onboardingCompleted: profile.onboarding_completed,
+            onboardingCompleted: !!profile.onboarding_completed,
             isAdmin: profile.is_admin || false,
             isSubscribed: profile.is_subscribed || false,
             subscriptionStatus: profile.subscription_status || 'inactive',
@@ -308,24 +263,51 @@ export function PropertyProvider({ children }: { children: React.ReactNode }) {
             clientRequirements: profile.client_requirements,
             ownerProfile: profile.owner_profile,
             city: profile.city,
-            address: profile.address
-          });
+            address: profile.address,
+            createdAt: profile.created_at
+          };
+          setUser(userData);
+          localStorage.setItem('keydeals_user', JSON.stringify(userData));
         } else {
-          setUser({
-            id: session.user.id,
-            email: session.user.email || '',
-            name: session.user.user_metadata?.full_name || '',
-            phone: session.user.user_metadata?.phone || '',
+          // No profile yet, but we have auth user
+          const userData: User = {
+            id: sessionUser.id,
+            email: sessionUser.email || '',
+            name: sessionUser.user_metadata?.full_name || '',
+            phone: sessionUser.user_metadata?.phone || '',
             isAdmin: false,
             isSubscribed: false,
+            subscriptionStatus: 'inactive',
             referralCount: 0,
             referralEarnedCount: 0,
             onboardingCompleted: false
-          });
+          };
+          setUser(userData);
+          localStorage.setItem('keydeals_user', JSON.stringify(userData));
         }
+      } catch (err) {
+        console.error('Error fetching profile:', err);
+      } finally {
+        setIsAuthReady(true);
+      }
+    };
+
+    // Check active session on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        fetchProfile(session.user);
+      } else {
+        setIsAuthReady(true);
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        fetchProfile(session.user);
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
         localStorage.removeItem('keydeals_user');
+        setIsAuthReady(true);
       }
     });
 
@@ -388,7 +370,8 @@ export function PropertyProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addProperty = async (prop: Property) => {
-    setProperties([prop, ...properties]);
+    const propertyWithUser = { ...prop, user_id: user?.id };
+    setProperties([propertyWithUser, ...properties]);
     
     if (!supabase) return;
     
@@ -398,6 +381,7 @@ export function PropertyProvider({ children }: { children: React.ReactNode }) {
         .from('properties')
         .insert([{
           id: prop.id,
+          user_id: user?.id,
           title: prop.title,
           type: prop.type,
           purpose: prop.purpose,
@@ -408,6 +392,8 @@ export function PropertyProvider({ children }: { children: React.ReactNode }) {
           location: prop.location,
           landmark: prop.landmark,
           geopoint: prop.geopoint,
+          latitude: prop.geopoint?.lat,
+          longitude: prop.geopoint?.lng,
           facing: prop.facing,
           corner_side_front: prop.cornerSideFront,
           corner_side_side: prop.cornerSideSide,
@@ -465,7 +451,7 @@ export function PropertyProvider({ children }: { children: React.ReactNode }) {
           nearby_public_transport: prop.nearbyPublicTransport,
           second_visit_time: prop.secondVisitTime,
           second_visit_confirmed: prop.secondVisitConfirmed,
-          is_public: prop.is_public
+          is_published: prop.is_published
         }]);
         
       if (error) throw error;
@@ -493,6 +479,8 @@ export function PropertyProvider({ children }: { children: React.ReactNode }) {
           location: prop.location,
           landmark: prop.landmark,
           geopoint: prop.geopoint,
+          latitude: prop.geopoint?.lat,
+          longitude: prop.geopoint?.lng,
           facing: prop.facing,
           corner_side_front: prop.cornerSideFront,
           corner_side_side: prop.cornerSideSide,
@@ -550,7 +538,7 @@ export function PropertyProvider({ children }: { children: React.ReactNode }) {
           nearby_public_transport: prop.nearbyPublicTransport,
           second_visit_time: prop.secondVisitTime,
           second_visit_confirmed: prop.secondVisitConfirmed,
-          is_public: prop.is_public
+          is_published: prop.is_published
         })
         .eq('id', prop.id);
         
@@ -596,16 +584,88 @@ export function PropertyProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const addLead = (lead: Lead) => {
-    setLeads([lead, ...leads]);
+  const addLead = async (lead: Lead) => {
+    const leadWithUser = { ...lead, user_id: user?.id };
+    setLeads([leadWithUser, ...leads]);
+    
+    if (!supabase) return;
+    
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .insert([{
+          id: lead.id,
+          user_id: user?.id,
+          name: lead.name,
+          phone: lead.phone,
+          whatsapp: lead.whatsapp,
+          interested_in: lead.interestedIn,
+          notes: lead.notes,
+          status: lead.status,
+          profession: lead.profession,
+          resident_address: lead.residentAddress,
+          purpose: lead.purpose,
+          email: lead.email,
+          budget_min: lead.budgetMin,
+          budget_max: lead.budgetMax,
+          location: lead.location,
+          preferred_facing: lead.preferredFacing,
+          source: lead.source,
+          cart_properties: lead.cartProperties
+        }]);
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error adding lead to Supabase:', err);
+    }
   };
 
-  const updateLead = (lead: Lead) => {
+  const updateLead = async (lead: Lead) => {
     setLeads(leads.map(l => l.id === lead.id ? lead : l));
+    
+    if (!supabase) return;
+    
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .update({
+          name: lead.name,
+          phone: lead.phone,
+          whatsapp: lead.whatsapp,
+          interested_in: lead.interestedIn,
+          notes: lead.notes,
+          status: lead.status,
+          profession: lead.profession,
+          resident_address: lead.residentAddress,
+          purpose: lead.purpose,
+          email: lead.email,
+          budget_min: lead.budgetMin,
+          budget_max: lead.budgetMax,
+          location: lead.location,
+          preferred_facing: lead.preferredFacing,
+          source: lead.source,
+          cart_properties: lead.cartProperties
+        })
+        .eq('id', lead.id);
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error updating lead in Supabase:', err);
+    }
   };
 
-  const deleteLead = (id: string) => {
+  const deleteLead = async (id: string) => {
     setLeads(leads.filter(l => l.id !== id));
+    
+    if (!supabase) return;
+    
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error deleting lead from Supabase:', err);
+    }
   };
 
   const updateSettings = (newSettings: CompanySettings) => {
@@ -638,26 +698,63 @@ export function PropertyProvider({ children }: { children: React.ReactNode }) {
     setAdminSettings(newSettings);
   };
 
-  const addAdvertisement = (ad: Advertisement) => {
+  const addAdvertisement = async (ad: Advertisement) => {
     setAdvertisements([ad, ...advertisements]);
+    
+    if (!supabase) return;
+    
+    try {
+      const { error } = await supabase
+        .from('advertisements')
+        .insert([{
+          id: ad.id,
+          title: ad.title,
+          developer_name: ad.developerName,
+          description: ad.description,
+          city: ad.city,
+          address: ad.address,
+          geopoint: ad.geopoint,
+          latitude: ad.geopoint?.lat,
+          longitude: ad.geopoint?.lng,
+          image: ad.image,
+          price_range: ad.priceRange,
+          contact_number: ad.contactNumber,
+          whatsapp_number: ad.whatsappNumber,
+          expires_at: ad.expiresAt,
+          is_paid: ad.isPaid,
+          brochures: ad.brochures
+        }]);
+        
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error adding advertisement to Supabase:', err);
+    }
   };
 
   const refreshData = async () => {
     if (!supabase) return;
     
     try {
-      const { data, error } = await supabase
-        .from('properties')
-        .select('*')
-        .order('created_at', { ascending: false });
-        
-      if (error) throw error;
+      // Fetch properties
+      let query = supabase.from('properties').select('*');
       
-      if (data) {
+      // If user is logged in, fetch their own properties OR published ones
+      if (user?.id) {
+        query = query.or(`user_id.eq.${user.id},is_published.eq.true,is_public.eq.true`);
+      } else {
+        // If not logged in, only fetch published ones
+        query = query.or('is_published.eq.true,is_public.eq.true');
+      }
+
+      const { data: propData, error: propError } = await query.order('created_at', { ascending: false });
+        
+      if (propError) throw propError;
+      
+      if (propData) {
         // Map snake_case from Supabase to camelCase for the app
-        const mappedProperties = data.map((p: any) => ({
+        const mappedProperties = propData.map((p: any) => ({
           ...p,
-          geopoint: p.geopoint || p.geo_point,
+          geopoint: p.geopoint || (p.latitude && p.longitude ? { lat: p.latitude, lng: p.longitude } : p.geo_point),
           addedAt: p.added_at || p.addedAt || p.created_at,
           visitTime: p.visit_time || p.visitTime,
           ownerName: p.owner_name || p.ownerName,
@@ -709,12 +806,56 @@ export function PropertyProvider({ children }: { children: React.ReactNode }) {
           nearbyPublicTransport: p.nearby_public_transport ?? p.nearbyPublicTransport,
           secondVisitTime: p.second_visit_time || p.secondVisitTime,
           secondVisitConfirmed: p.second_visit_confirmed ?? p.secondVisitConfirmed,
-          is_public: p.is_public ?? p.isPublic
+          is_published: p.is_published ?? p.is_public ?? p.isPublic ?? false,
+          user_id: p.user_id
         }));
         setProperties(mappedProperties as Property[]);
       }
+
+      // Fetch leads (My Clients)
+      let leadQuery = supabase.from('leads').select('*');
+      
+      if (user?.id) {
+        leadQuery = leadQuery.eq('user_id', user.id);
+      }
+
+      const { data: leadData, error: leadError } = await leadQuery.order('created_at', { ascending: false });
+
+      if (!leadError && leadData) {
+        const mappedLeads = leadData.map((l: any) => ({
+          ...l,
+          interestedIn: l.interested_in,
+          budgetMin: l.budget_min,
+          budgetMax: l.budget_max,
+          preferredFacing: l.preferred_facing,
+          cartProperties: l.cart_properties,
+          residentAddress: l.resident_address,
+          user_id: l.user_id
+        }));
+        setLeads(mappedLeads as Lead[]);
+      }
+
+      // Fetch advertisements
+      const { data: adData, error: adError } = await supabase
+        .from('advertisements')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (!adError && adData) {
+        const mappedAds = adData.map((ad: any) => ({
+          ...ad,
+          developerName: ad.developer_name || ad.developerName,
+          priceRange: ad.price_range || ad.priceRange,
+          contactNumber: ad.contact_number || ad.contactNumber,
+          whatsappNumber: ad.whatsapp_number || ad.whatsappNumber,
+          expiresAt: ad.expires_at || ad.expiresAt,
+          isPaid: ad.is_paid ?? ad.isPaid,
+          geopoint: ad.geopoint || (ad.latitude && ad.longitude ? { lat: ad.latitude, lng: ad.longitude } : undefined)
+        }));
+        setAdvertisements(mappedAds as Advertisement[]);
+      }
     } catch (err) {
-      console.error('Error fetching properties:', err);
+      console.error('Error refreshing data:', err);
     }
   };
 
@@ -737,6 +878,7 @@ export function PropertyProvider({ children }: { children: React.ReactNode }) {
       adminSettings, updateAdminSettings,
       referralReward, setReferralReward,
       globalLocation, setGlobalLocation,
+      isAuthReady,
       advertisements, addAdvertisement,
       brokers,
       publicLeads,

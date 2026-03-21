@@ -4,6 +4,7 @@ import { Key, Fingerprint, Mail, Lock, ArrowRight, UserPlus, LogIn, ShieldCheck,
 import { useProperties } from '../context/PropertyContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../lib/supabase';
+import { Logo } from '../components/Logo';
 
 type AuthView = 'landing' | 'signin' | 'signup';
 
@@ -87,15 +88,13 @@ export function Login() {
           animate={{ scale: 1, opacity: 1 }}
           className="flex justify-center"
         >
-          <div className="w-20 h-20 bg-blue-700 rounded-3xl flex items-center justify-center shadow-2xl shadow-blue-700/20 overflow-hidden">
-            <img src="/favicon.svg" alt="Logo" className="w-full h-full" />
-          </div>
+          <Logo size="xl" />
         </motion.div>
         <motion.h2 
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="mt-6 text-center text-4xl font-black text-keydeals-text-primary tracking-tight"
+          className="mt-6 text-center text-5xl font-black text-[#002366] tracking-tight"
         >
           Key Deals
         </motion.h2>
@@ -121,17 +120,17 @@ export function Login() {
                 className="space-y-6"
               >
                 <div className="space-y-4">
-                  <button
-                    onClick={() => setView('signin')}
-                    className="w-full flex items-center justify-center gap-3 py-4 px-6 bg-blue-700 text-white rounded-2xl font-bold text-lg hover:bg-blue-800 transition-all shadow-lg shadow-blue-700/20"
-                  >
+                    <button
+                      onClick={() => setView('signin')}
+                      className="w-full flex items-center justify-center gap-3 py-4 px-6 bg-[#002366] text-white rounded-2xl font-bold text-lg hover:bg-[#002366]/90 transition-all shadow-lg shadow-[#002366]/20"
+                    >
                     <LogIn className="w-5 h-5" />
                     Sign In
                   </button>
-                  <button
-                    onClick={() => setView('signup')}
-                    className="w-full flex items-center justify-center gap-3 py-4 px-6 bg-white text-blue-700 border-2 border-blue-700 rounded-2xl font-bold text-lg hover:bg-blue-50 transition-all"
-                  >
+                    <button
+                      onClick={() => setView('signup')}
+                      className="w-full flex items-center justify-center gap-3 py-4 px-6 bg-white text-[#002366] border-2 border-[#002366] rounded-2xl font-bold text-lg hover:bg-[#002366]/5 transition-all"
+                    >
                     <UserPlus className="w-5 h-5" />
                     Create Account
                   </button>
@@ -173,7 +172,7 @@ export function Login() {
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full pl-12 pr-4 py-4 bg-white border border-keydeals-border rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-medium text-keydeals-text-secondary"
+                        className="w-full pl-12 pr-4 py-4 bg-white border border-keydeals-border rounded-2xl focus:ring-2 focus:ring-[#002366] transition-all font-medium text-keydeals-text-secondary"
                         placeholder="you@example.com"
                       />
                     </div>
@@ -188,7 +187,7 @@ export function Login() {
                         required
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="w-full pl-12 pr-4 py-4 bg-white border border-keydeals-border rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-medium text-keydeals-text-secondary"
+                        className="w-full pl-12 pr-4 py-4 bg-white border border-keydeals-border rounded-2xl focus:ring-2 focus:ring-[#002366] transition-all font-medium text-keydeals-text-secondary"
                         placeholder="••••••••"
                       />
                     </div>
@@ -214,16 +213,16 @@ export function Login() {
 
                   <div className="flex items-center justify-between px-1">
                     <label className="flex items-center gap-2 cursor-pointer group">
-                      <input type="checkbox" className="w-4 h-4 rounded border-keydeals-border text-blue-700 focus:ring-blue-500" defaultChecked />
+                      <input type="checkbox" className="w-4 h-4 rounded border-keydeals-border text-[#002366] focus:ring-[#002366]" defaultChecked />
                       <span className="text-sm text-keydeals-text-secondary group-hover:text-keydeals-text-primary transition-colors">Remember me</span>
                     </label>
-                    <button type="button" className="text-sm font-bold text-blue-700 hover:text-blue-800">Forgot?</button>
+                    <button type="button" className="text-sm font-bold text-[#002366] hover:text-[#002366]/80">Forgot?</button>
                   </div>
 
                   <div className="space-y-3">
                     <button
                       type="submit"
-                      className="w-full py-4 bg-blue-700 text-white rounded-2xl font-bold text-lg hover:bg-blue-800 transition-all shadow-lg shadow-blue-700/20"
+                      className="w-full py-4 bg-[#002366] text-white rounded-2xl font-bold text-lg hover:bg-[#002366]/90 transition-all shadow-lg shadow-[#002366]/20"
                     >
                       Sign In
                     </button>
@@ -256,7 +255,7 @@ export function Login() {
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full pl-12 pr-4 py-4 bg-white border border-keydeals-border rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-medium text-keydeals-text-secondary"
+                        className="w-full pl-12 pr-4 py-4 bg-white border border-keydeals-border rounded-2xl focus:ring-2 focus:ring-[#002366] transition-all font-medium text-keydeals-text-secondary"
                         placeholder="you@example.com"
                       />
                     </div>
@@ -271,7 +270,7 @@ export function Login() {
                         required
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="w-full pl-12 pr-4 py-4 bg-white border border-keydeals-border rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-medium text-keydeals-text-secondary"
+                        className="w-full pl-12 pr-4 py-4 bg-white border border-keydeals-border rounded-2xl focus:ring-2 focus:ring-[#002366] transition-all font-medium text-keydeals-text-secondary"
                         placeholder="••••••••"
                       />
                     </div>
@@ -286,7 +285,7 @@ export function Login() {
                         required
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full pl-12 pr-4 py-4 bg-white border border-keydeals-border rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-medium text-keydeals-text-secondary"
+                        className="w-full pl-12 pr-4 py-4 bg-white border border-keydeals-border rounded-2xl focus:ring-2 focus:ring-[#002366] transition-all font-medium text-keydeals-text-secondary"
                         placeholder="••••••••"
                       />
                     </div>
@@ -302,7 +301,7 @@ export function Login() {
                   <div className="space-y-3">
                     <button
                       type="submit"
-                      className="w-full py-4 bg-blue-700 text-white rounded-2xl font-bold text-lg hover:bg-blue-800 transition-all shadow-lg shadow-blue-700/20"
+                      className="w-full py-4 bg-[#002366] text-white rounded-2xl font-bold text-lg hover:bg-[#002366]/90 transition-all shadow-lg shadow-[#002366]/20"
                     >
                       Create Account
                     </button>

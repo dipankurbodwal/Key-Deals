@@ -62,7 +62,7 @@ export function Tools() {
     <div className="max-w-2xl mx-auto space-y-8 pb-12">
       <div>
         <h1 className="text-3xl font-bold text-slate-700 tracking-tight flex items-center gap-3">
-          <Calculator className="w-8 h-8 text-blue-700" /> Vernacular Land Calculator
+          <Calculator className="w-8 h-8 text-[#002366]" /> Vernacular Land Calculator
         </h1>
         <p className="text-slate-500 mt-1">Convert land areas across regional Indian units.</p>
       </div>
@@ -76,7 +76,7 @@ export function Tools() {
               type="number"
               value={value}
               onChange={(e) => setValue(e.target.value)}
-              className="w-full text-4xl font-bold text-blue-700 bg-slate-50 border-none focus:ring-0 p-6 rounded-2xl placeholder:text-slate-300"
+              className="w-full text-4xl font-bold text-[#002366] bg-slate-50 border-none focus:ring-0 p-6 rounded-2xl placeholder:text-slate-300"
               placeholder="0.00"
             />
           </div>
@@ -89,7 +89,7 @@ export function Tools() {
                 <select
                   value={fromUnit}
                   onChange={(e) => setFromUnit(e.target.value as Unit)}
-                  className="w-full pl-4 pr-10 py-4 bg-white border-2 border-slate-100 rounded-2xl appearance-none focus:border-blue-500 outline-none transition-all font-semibold text-slate-700"
+                  className="w-full pl-4 pr-10 py-4 bg-white border-2 border-slate-100 rounded-2xl appearance-none focus:border-[#002366] outline-none transition-all font-semibold text-slate-700"
                 >
                   {units.map(u => <option key={u} value={u}>{u}</option>)}
                 </select>
@@ -104,7 +104,7 @@ export function Tools() {
                 <select
                   value={toUnit}
                   onChange={(e) => setToUnit(e.target.value as Unit)}
-                  className="w-full pl-4 pr-10 py-4 bg-white border-2 border-slate-100 rounded-2xl appearance-none focus:border-blue-500 outline-none transition-all font-semibold text-slate-700"
+                  className="w-full pl-4 pr-10 py-4 bg-white border-2 border-slate-100 rounded-2xl appearance-none focus:border-[#002366] outline-none transition-all font-semibold text-slate-700"
                 >
                   {units.map(u => <option key={u} value={u}>{u}</option>)}
                 </select>
@@ -115,8 +115,8 @@ export function Tools() {
 
           {/* Regional Selector */}
           {(fromUnit === 'Bigha' || fromUnit === 'Biswa' || toUnit === 'Bigha' || toUnit === 'Biswa') && (
-            <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 animate-in fade-in slide-in-from-top-2 duration-300">
-              <label className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-3 block">Select State for Bigha/Biswa</label>
+            <div className="p-4 bg-[#002366]/5 rounded-2xl border border-[#002366]/10 animate-in fade-in slide-in-from-top-2 duration-300">
+              <label className="text-xs font-bold text-[#002366] uppercase tracking-wider mb-3 block">Select State for Bigha/Biswa</label>
               <div className="flex flex-wrap gap-2">
                 {(['UP', 'Rajasthan', 'Bihar', 'Punjab'] as State[]).map(s => (
                   <button
@@ -125,8 +125,8 @@ export function Tools() {
                     className={cn(
                       "px-4 py-2 rounded-xl text-sm font-bold transition-all",
                       state === s 
-                        ? "bg-blue-700 text-white shadow-md" 
-                        : "bg-white text-slate-600 hover:bg-blue-100"
+                        ? "bg-[#002366] text-white shadow-md" 
+                        : "bg-white text-slate-600 hover:bg-[#002366]/10"
                     )}
                   >
                     {s}
@@ -143,7 +143,7 @@ export function Tools() {
               <h2 className="text-5xl font-black text-white">
                 {result.toLocaleString(undefined, { maximumFractionDigits: 4 })}
               </h2>
-              <p className="text-blue-400 font-bold text-lg">{toUnit}</p>
+              <p className="text-[#002366] font-bold text-lg">{toUnit}</p>
             </div>
           </div>
 

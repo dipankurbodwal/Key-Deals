@@ -60,7 +60,7 @@ export function Dashboard() {
       navigate('/subscription');
       return;
     }
-    updateProperty({ ...property, is_public: !property.is_public });
+    updateProperty({ ...property, is_published: !property.is_published });
   };
 
   const calculateMatchScore = (property: Property, client: Lead | null) => {
@@ -77,7 +77,7 @@ export function Dashboard() {
     // Location Match (Weight: 30)
     if (client.location) {
       totalWeight += 30;
-      if (property.location.toLowerCase().includes(client.location.toLowerCase())) {
+      if (property.location?.toLowerCase()?.includes(client.location?.toLowerCase() || '')) {
         score += 30;
       } else {
         score += 10; // Partial match
@@ -97,8 +97,8 @@ export function Dashboard() {
   };
 
   const filteredProperties = properties.filter(p => {
-    const matchesSearch = p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = p.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.landmark?.toLowerCase().includes(searchTerm.toLowerCase());
     
     if (!matchesSearch) return false;
@@ -113,17 +113,17 @@ export function Dashboard() {
       const req = user.clientRequirements;
       
       // Property Type Match
-      if (req.propertyType && !p.type.toLowerCase().includes(req.propertyType.toLowerCase())) {
+      if (req.propertyType && !p.type?.toLowerCase().includes(req.propertyType.toLowerCase())) {
         return false;
       }
 
       // Budget Match
-      const priceNum = parseInt(p.price.replace(/\D/g, '')) * (p.price.toLowerCase().includes('cr') ? 10000000 : p.price.toLowerCase().includes('lac') ? 100000 : 1);
+      const priceNum = parseInt(p.price?.replace(/\D/g, '') || '0') * (p.price?.toLowerCase().includes('cr') ? 10000000 : p.price?.toLowerCase().includes('lac') ? 100000 : 1);
       if (req.budgetMax && priceNum > req.budgetMax) return false;
       if (req.budgetMin && priceNum < req.budgetMin) return false;
 
       // Landmark Match (optional/soft)
-      if (req.landmarks && !p.landmark?.toLowerCase().includes(req.landmarks.toLowerCase()) && !p.location.toLowerCase().includes(req.landmarks.toLowerCase())) {
+      if (req.landmarks && !p.landmark?.toLowerCase().includes(req.landmarks.toLowerCase()) && !p.location?.toLowerCase().includes(req.landmarks.toLowerCase())) {
         // We could make this a soft match, but for now let's keep it strict if provided
         // return false; 
       }
@@ -133,17 +133,34 @@ export function Dashboard() {
   });
 
   const displayedProperties = mode === 'Marketplace' 
-    ? filteredProperties.filter(p => p.is_public)
-    : filteredProperties;
+    ? filteredProperties.filter(p => p.is_published)
+    : filteredProperties.filter(p => p.user_id === user?.id);
+
+  const clientStats = leads.reduce((acc, lead) => {
+    const purpose = lead.purpose || 'Other';
+    acc[purpose] = (acc[purpose] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const inventoryStats = properties.filter(p => p.user_id === user?.id).reduce((acc, p) => {
+    const purpose = p.purpose || 'Other';
+    acc[purpose] = (acc[purpose] || 0) + 1;
+    acc.total = (acc.total || 0) + 1;
+    acc.published = (acc.published || 0) + (p.is_published ? 1 : 0);
+    return acc;
+  }, { total: 0, published: 0 } as Record<string, number>);
 
   // For Owners: Show matching client requirements
   const matchingLeads = user?.role === 'Property Owner' ? publicLeads.filter(lead => {
+    if (!lead) return false;
     // Basic matching logic: same city or purpose
-    if (globalLocation !== 'All India' && !lead.location.toLowerCase().includes(globalLocation.toLowerCase())) {
+    if (globalLocation !== 'All India' && !lead.city?.toLowerCase()?.includes(globalLocation.toLowerCase())) {
       return false;
     }
     return true;
   }) : [];
+
+  const isOwner = user?.role === 'Owner' || user?.role === 'Property Owner';
 
   return (
     <div className="space-y-8 pb-12">
@@ -157,13 +174,13 @@ export function Dashboard() {
           </p>
         </div>
         
-        {mode === 'Professionals' && (
+        {(mode === 'Professionals' || isOwner) && (
           <div className="flex items-center gap-3">
-            <Link to="/tools" className="flex items-center gap-2 bg-keydeals-surface text-blue-700 border border-keydeals-border px-6 py-2.5 rounded-xl font-bold hover:bg-white/40 transition-colors shadow-sm text-center whitespace-nowrap">
+            <Link to="/tools" className="flex items-center gap-2 bg-keydeals-surface text-[#002366] border border-keydeals-border px-6 py-2.5 rounded-xl font-bold hover:bg-white/40 transition-colors shadow-sm text-center whitespace-nowrap">
               <Calculator className="w-5 h-5" />
               Land Calculator
             </Link>
-            <Link to="/add-property" className="bg-blue-700 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-blue-800 transition-colors shadow-sm text-center whitespace-nowrap">
+            <Link to="/add-property" className="bg-[#002366] text-white px-6 py-2.5 rounded-xl font-bold hover:bg-[#002366]/90 transition-colors shadow-sm text-center whitespace-nowrap">
               {t('buttons.addProperty')}
             </Link>
           </div>
@@ -172,33 +189,47 @@ export function Dashboard() {
 
       {/* AI Match Score & Search Section */}
       <div className="bg-keydeals-surface p-6 rounded-2xl border border-keydeals-border shadow-sm space-y-6">
-        <div className="flex items-center gap-2 text-blue-700">
+        <div className="flex items-center gap-2 text-[#002366]">
           <Globe className="w-5 h-5" />
           <span className="text-sm font-bold uppercase tracking-wider">AI Client Search</span>
         </div>
         
-        <div className="flex flex-col md:flex-row gap-6 items-end">
+        <div className="flex flex-col md:flex-row gap-6 items-start">
           {/* Client Selection */}
-          <div className="flex-1 w-full space-y-2">
-            <label className="text-xs font-bold text-keydeals-text-primary uppercase tracking-wider">
-              Select Client
-            </label>
-            <div className="relative">
-              <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-keydeals-text-secondary/50" />
-              <select
-                value={activeClient?.id || ''}
-                onChange={(e) => {
-                  const client = leads.find(l => l.id === e.target.value) || null;
-                  setActiveClient(client);
-                }}
-                className="w-full pl-12 pr-4 py-3 rounded-xl border border-keydeals-border bg-white text-keydeals-text-secondary focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all appearance-none"
-              >
-                <option value="">Select Client</option>
-                {leads.map(lead => (
-                  <option key={lead.id} value={lead.id}>{lead.name} ({lead.requirement})</option>
-                ))}
-              </select>
+          <div className="flex-1 w-full space-y-4">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-keydeals-text-primary uppercase tracking-wider">
+                Select Client
+              </label>
+              <div className="relative">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-keydeals-text-secondary/50" />
+                <select
+                  value={activeClient?.id || ''}
+                  onChange={(e) => {
+                    const client = leads.find(l => l.id === e.target.value) || null;
+                    setActiveClient(client);
+                  }}
+                  className="w-full pl-12 pr-4 py-3 rounded-xl border border-keydeals-border bg-white text-keydeals-text-secondary focus:outline-none focus:ring-2 focus:ring-[#002366] transition-all appearance-none"
+                >
+                  <option value="">Select Client</option>
+                  {leads.map(lead => (
+                    <option key={lead.id} value={lead.id}>{lead.name} ({lead.purpose || lead.status})</option>
+                  ))}
+                </select>
+              </div>
             </div>
+
+            {activeClient && (
+              <div className="bg-white p-4 rounded-xl border border-keydeals-border flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-2">
+                <div>
+                  <h4 className="font-bold text-keydeals-text-primary">{activeClient.name}</h4>
+                  <p className="text-xs text-keydeals-text-secondary mt-1">
+                    Purpose: <span className="font-bold text-[#002366]">{activeClient.purpose || activeClient.status}</span>
+                  </p>
+                </div>
+                <Link to={`/leads`} className="text-[#002366] hover:underline text-xs font-bold">Manage Client</Link>
+              </div>
+            )}
           </div>
 
           {/* Search Bar */}
@@ -213,7 +244,7 @@ export function Dashboard() {
                 placeholder="Search properties..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 rounded-xl border border-keydeals-border bg-white text-keydeals-text-secondary focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                className="w-full pl-12 pr-4 py-3 rounded-xl border border-keydeals-border bg-white text-keydeals-text-secondary focus:outline-none focus:ring-2 focus:ring-[#002366] transition-all"
               />
             </div>
           </div>
@@ -222,11 +253,82 @@ export function Dashboard() {
         <PropertyMap />
       </div>
 
-      {/* Rental Hub Navigation Card */}
-      <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+      {/* Navigation Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {user?.role === 'Broker' && mode === 'Professionals' && (
+          <>
+            <div className="bg-white p-6 rounded-3xl border border-keydeals-border shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center">
+                  <Home className="w-6 h-6 text-[#002366]" />
+                </div>
+                <Link 
+                  to="/add-property"
+                  className="p-2 bg-[#002366] text-white rounded-xl hover:bg-[#002366]/90 transition-colors shadow-sm"
+                  title="Add Property"
+                >
+                  <Plus className="w-5 h-5" />
+                </Link>
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-keydeals-text-primary">My Inventory</h3>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <span className="text-xs font-bold px-2 py-1 bg-slate-100 text-slate-600 rounded-lg">
+                    {inventoryStats.total} Total
+                  </span>
+                  <span className="text-xs font-bold px-2 py-1 bg-purple-100 text-purple-600 rounded-lg">
+                    {inventoryStats.published} Published
+                  </span>
+                  {Object.entries(inventoryStats).map(([key, val]) => {
+                    if (key === 'total' || key === 'published') return null;
+                    return (
+                      <span key={key} className="text-xs font-bold px-2 py-1 bg-blue-50 text-blue-600 rounded-lg">
+                        {val} {key}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-3xl border border-keydeals-border shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center">
+                  <Users className="w-6 h-6 text-emerald-700" />
+                </div>
+                <Link 
+                  to="/add-client"
+                  className="p-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors shadow-sm"
+                  title="Add Client"
+                >
+                  <Plus className="w-5 h-5" />
+                </Link>
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-keydeals-text-primary">My Clients</h3>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {Object.entries(clientStats).map(([key, val]) => (
+                    <span key={key} className="text-xs font-bold px-2 py-1 bg-emerald-50 text-emerald-600 rounded-lg">
+                      {val} {key}
+                    </span>
+                  ))}
+                  {leads.length === 0 && (
+                    <p className="text-sm text-keydeals-text-secondary">No clients added yet.</p>
+                  )}
+                </div>
+                <Link to="/leads" className="mt-4 block text-sm font-bold text-emerald-600 hover:underline">
+                  View all clients →
+                </Link>
+              </div>
+            </div>
+          </>
+        )}
         <Link 
           to="/rentals"
-          className="group bg-gradient-to-br from-blue-600 to-blue-800 p-8 rounded-3xl shadow-xl shadow-blue-200 overflow-hidden relative"
+          className={cn(
+            "group p-8 rounded-3xl shadow-xl overflow-hidden relative",
+            user?.role === 'Broker' && mode === 'Professionals' ? "bg-gradient-to-br from-slate-800 to-slate-900 shadow-slate-200" : "bg-gradient-to-br from-[#002366] to-[#002366]/80 shadow-[#002366]/20 col-span-full"
+          )}
         >
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-2">
@@ -270,32 +372,32 @@ export function Dashboard() {
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center font-bold text-emerald-700">
-                      {lead.clientName.charAt(0)}
+                      {lead.name?.charAt(0) || 'C'}
                     </div>
                     <div>
-                      <h4 className="font-bold text-keydeals-text-primary">{lead.clientName}</h4>
-                      <p className="text-xs text-emerald-600 font-medium">{lead.purpose === 'rent' ? 'Looking to Rent' : 'Looking to Buy'}</p>
+                      <h4 className="font-bold text-keydeals-text-primary">{lead.name}</h4>
+                      <p className="text-xs text-emerald-600 font-medium">{lead.clientRequirements?.purpose === 'Rent' ? 'Looking to Rent' : 'Looking to Buy'}</p>
                     </div>
                   </div>
 
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm text-keydeals-text-secondary">
                       <MapPin className="w-4 h-4" />
-                      <span>{lead.location}</span>
+                      <span>{lead.clientRequirements?.location || lead.city}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm font-bold text-keydeals-text-primary">
                       <IndianRupee className="w-4 h-4" />
-                      <span>Budget: ₹{lead.budgetMax?.toLocaleString()}</span>
+                      <span>Budget: ₹{lead.clientRequirements?.budgetMax?.toLocaleString() || 'Any'}</span>
                     </div>
                   </div>
 
                   <div className="pt-4 border-t border-emerald-50 flex items-center justify-between">
                     <div className="flex items-center gap-2 text-emerald-700 font-bold">
                       <Phone className="w-4 h-4" />
-                      <span>{lead.phoneNumber}</span>
+                      <span>{lead.phone}</span>
                     </div>
                     <button 
-                      onClick={() => alert(`Contacting ${lead.clientName}...`)}
+                      onClick={() => alert(`Contacting ${lead.name}...`)}
                       className="p-2 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition-colors"
                     >
                       <MessageSquare className="w-4 h-4" />
@@ -311,8 +413,8 @@ export function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {displayedProperties.map(property => {
           const navUrl = `https://www.google.com/maps/dir/?api=1&destination=${property.geopoint.lat},${property.geopoint.lng}`;
-          const whatsappUrl = `https://wa.me/${property.whatsappNumber.replace(/\D/g, '')}`;
-          const callUrl = `tel:${property.phoneNumber.replace(/\D/g, '')}`;
+          const whatsappUrl = `https://wa.me/${property.whatsappNumber?.replace(/\D/g, '') || ''}`;
+          const callUrl = `tel:${property.phoneNumber?.replace(/\D/g, '') || ''}`;
           
           const matchScore = mode === 'Professionals' ? calculateMatchScore(property, activeClient) : null;
 
@@ -333,18 +435,18 @@ export function Dashboard() {
                 <div className="absolute top-3 left-3 flex flex-col gap-2">
                   <span className={cn(
                     "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg w-fit",
-                    property.purpose === 'Rent' ? "bg-orange-500 text-white" : "bg-blue-700 text-white"
+                    property.purpose === 'Rent' ? "bg-orange-500 text-white" : "bg-[#002366] text-white"
                   )}>
                     FOR {property.purpose === 'Rent' ? 'RENT' : 'SALE'}
                   </span>
                   <span className={cn(
                     "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm w-fit",
                     property.status === 'Available' ? "bg-emerald-100 text-emerald-800" : 
-                    property.status === 'Sold' ? "bg-blue-100 text-blue-800" : "bg-red-100 text-red-800"
+                    property.status === 'Sold' ? "bg-blue-100 text-[#002366]" : "bg-red-100 text-red-800"
                   )}>
                     {property.status}
                   </span>
-                  {mode === 'Professionals' && property.is_public && (
+                  {mode === 'Professionals' && property.is_published && (
                     <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm bg-purple-100 text-purple-800 w-fit flex items-center gap-1">
                       <Store className="w-3 h-3" /> Published
                     </span>
@@ -368,7 +470,7 @@ export function Dashboard() {
                 </div>
                 
                 <div className="flex items-start gap-2 text-keydeals-text-secondary text-sm mb-4">
-                  <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-blue-700" />
+                  <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-[#002366]" />
                   <span className="line-clamp-2">{property.location}</span>
                 </div>
 
@@ -409,7 +511,7 @@ export function Dashboard() {
                     </a>
                     <a 
                       href={callUrl}
-                      className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors border border-blue-100"
+                      className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-[#002366] transition-colors border border-blue-100"
                       title="Call Owner"
                     >
                       <Phone className="w-4 h-4" />
@@ -429,21 +531,21 @@ export function Dashboard() {
                       onClick={(e) => handleMarketplace(e, property)}
                       className={cn(
                         "flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition-colors border",
-                        property.is_public 
+                        property.is_published 
                           ? "bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-200" 
                           : "bg-white/20 text-keydeals-text-primary hover:bg-white/40 border-keydeals-border"
                       )}
-                      title={property.is_public ? "Remove from Marketplace" : "Publish to Marketplace"}
+                      title={property.is_published ? "Remove from Marketplace" : "Publish to Marketplace"}
                     >
                       <Store className="w-4 h-4" />
-                      <span className="text-[10px] font-bold">{property.is_public ? 'Unpublish' : 'Publish'}</span>
+                      <span className="text-[10px] font-bold">{property.is_published ? 'Unpublish' : 'Publish'}</span>
                     </button>
                   </div>
                 ) : (
                   <div className="mb-4">
                     <button 
                       onClick={() => handleUnlockContact(property)}
-                      className="w-full flex items-center justify-center gap-2 py-2.5 bg-blue-700 text-white rounded-xl font-bold hover:bg-blue-800 transition-colors shadow-sm"
+                      className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#002366] text-white rounded-xl font-bold hover:bg-[#002366]/90 transition-colors shadow-sm"
                     >
                       <Lock className="w-4 h-4 text-keydeals-surface" /> {t('buttons.unlockContact')}
                     </button>
@@ -458,7 +560,7 @@ export function Dashboard() {
                       className={cn(
                         "text-sm font-bold bg-transparent border-none focus:ring-0 cursor-pointer p-0",
                         property.status === 'Available' ? "text-emerald-700" : 
-                        property.status === 'Sold' ? "text-blue-700" : "text-red-700"
+                        property.status === 'Sold' ? "text-[#002366]" : "text-red-700"
                       )}
                     >
                       <option value="Available">Available</option>
@@ -466,12 +568,12 @@ export function Dashboard() {
                       <option value="Plan Cancelled">Plan Cancelled</option>
                     </select>
                   ) : (
-                    <span className="text-sm font-bold text-keydeals-text-secondary">ID: {property.id.slice(0, 8)}</span>
+                    <span className="text-sm font-bold text-keydeals-text-secondary">ID: {property.id?.slice(0, 8)}</span>
                   )}
                   
                   <Link 
                     to={`/property/${property.id}`}
-                    className="text-sm font-bold text-blue-700 hover:text-blue-800 transition-colors"
+                    className="text-sm font-bold text-[#002366] hover:text-[#002366]/80 transition-colors"
                   >
                     View Details &rarr;
                   </Link>
@@ -493,14 +595,14 @@ export function Dashboard() {
               <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
                 <Link 
                   to="/rental-leads"
-                  className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-700 text-white rounded-xl font-bold hover:bg-blue-800 transition-all shadow-lg shadow-blue-700/20"
+                  className="flex items-center justify-center gap-2 px-6 py-3 bg-[#002366] text-white rounded-xl font-bold hover:bg-[#002366]/90 transition-all shadow-lg shadow-[#002366]/20"
                 >
                   <Users className="w-4 h-4" />
                   Rental Leads
                 </Link>
                 <Link 
                   to="/property-required"
-                  className="flex items-center justify-center gap-2 px-6 py-3 bg-white text-blue-700 border border-blue-700 rounded-xl font-bold hover:bg-blue-50 transition-all"
+                  className="flex items-center justify-center gap-2 px-6 py-3 bg-white text-[#002366] border border-[#002366] rounded-xl font-bold hover:bg-blue-50 transition-all"
                 >
                   <Search className="w-4 h-4" />
                   Property Required

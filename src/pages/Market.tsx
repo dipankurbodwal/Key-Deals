@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { useProperties } from '../context/PropertyContext';
-import { Search, MapPin, Building2, IndianRupee, Globe } from 'lucide-react';
+import { Search, MapPin, Building2, IndianRupee, Globe, Key } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PropertyMap } from '../components/PropertyMap';
 
 export function Market() {
-  const { properties, globalLocation } = useProperties();
+  const { properties, globalLocation, user } = useProperties();
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
+
+  const isOwner = user?.role === 'Owner' || user?.role === 'Property Owner';
 
   const marketplaceProperties = properties.filter(p => {
     const matchesSearch = p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -21,7 +23,7 @@ export function Market() {
       return false;
     }
 
-    return p.is_public;
+    return p.is_published;
   });
 
   return (
@@ -29,10 +31,19 @@ export function Market() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
-            <Globe className="w-8 h-8 text-blue-700" /> Marketplace
+            <Globe className="w-8 h-8 text-[#002366]" /> Marketplace
           </h1>
           <p className="text-slate-500 mt-1">Discover direct owner properties in {globalLocation}.</p>
         </div>
+        {isOwner && (
+          <button 
+            onClick={() => navigate('/add-property')}
+            className="flex items-center gap-2 px-6 py-3 bg-[#002366] text-white rounded-xl font-bold hover:bg-[#002366]/90 transition-all shadow-lg shadow-[#002366]/20"
+          >
+            <Key className="w-5 h-5" />
+            Add Property
+          </button>
+        )}
       </div>
 
       <div className="space-y-6">
@@ -43,7 +54,7 @@ export function Market() {
             placeholder="Search marketplace..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none shadow-sm"
+            className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-[#002366] outline-none shadow-sm"
           />
         </div>
 
@@ -66,7 +77,7 @@ export function Market() {
                   referrerPolicy="no-referrer"
                 />
                 <div className="absolute top-4 left-4">
-                  <span className="px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full shadow-lg uppercase">Direct Owner</span>
+                  <span className="px-3 py-1 bg-[#002366] text-white text-xs font-bold rounded-full shadow-lg uppercase">Direct Owner</span>
                 </div>
                 <div className="absolute bottom-4 left-4 right-4">
                   <div className="bg-white/90 backdrop-blur-sm p-3 rounded-xl shadow-lg">

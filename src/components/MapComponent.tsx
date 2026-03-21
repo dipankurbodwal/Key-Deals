@@ -19,11 +19,13 @@ export function MapComponent({ center, zoom, markers, onMarkerClick }: MapProps)
   return (
     <div className="w-full h-full rounded-xl overflow-hidden shadow-md border border-black/5">
       <Map
-        defaultCenter={center}
-        defaultZoom={zoom}
-        mapId="DEMO_MAP_ID"
-        internalUsageAttributionIds={['gmp_mcp_codeassist_v1_aistudio']}
-        style={{ width: '100%', height: '100%' }}
+        {...({
+          defaultCenter: center,
+          defaultZoom: zoom,
+          mapId: "DEMO_MAP_ID",
+          internalUsageAttributionIds: ['gmp_mcp_codeassist_v1_aistudio'],
+          style: { width: '100%', height: '100%' }
+        } as any)}
       >
         {markers.map((marker) => (
           <AdvancedMarker

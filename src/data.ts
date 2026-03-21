@@ -45,6 +45,8 @@ export const MOCK_PROPERTIES: Property[] = [
     phoneNumber: '+15550198273',
     whatsappNumber: '15550198273',
     visitTime: addMinutes(now, 65).toISOString(), // 1 hour 5 mins from now
+    user_id: 'admin-1',
+    is_published: true,
   },
   {
     id: 'prop-2',
@@ -80,6 +82,8 @@ export const MOCK_PROPERTIES: Property[] = [
     phoneNumber: '+15550123456',
     whatsappNumber: '15550123456',
     visitTime: addMinutes(now, 120).toISOString(),
+    user_id: 'admin-1',
+    is_published: true,
   },
   {
     id: 'prop-3',
@@ -115,6 +119,8 @@ export const MOCK_PROPERTIES: Property[] = [
     ownerName: 'Sarah Jenkins',
     phoneNumber: '+15550187654',
     whatsappNumber: '15550187654',
+    user_id: 'admin-1',
+    is_published: false,
   }
 ];
 
